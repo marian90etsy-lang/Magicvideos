@@ -838,11 +838,18 @@ Recuerda: Tu objetivo es ayudar a crear momentos mágicos para niños. Sé cáli
                                 className="flex items-center cursor-pointer" 
                                 onClick={() => setCurrentPage('home')}
                             >
-                                <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
-                                    <Camera />
-                                </div>
-                                <span className="ml-3 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                    VideoMágico
+                                <img 
+                                    src="logo.png" 
+                                    alt="Magic Videos" 
+                                    className="h-10"
+                                    onError={(e) => {
+                                        // Fallback si el logo no carga
+                                        e.target.style.display = 'none';
+                                        e.target.nextElementSibling.style.display = 'block';
+                                    }}
+                                />
+                                <span className="ml-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600" style={{display: 'none'}}>
+                                    Magic Videos
                                 </span>
                             </div>
 
