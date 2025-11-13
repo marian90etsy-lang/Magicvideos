@@ -1,11 +1,10 @@
-{
-  "name": "magicvideos-backend",
+json{
+  "name": "magicvideos",
   "version": "1.0.0",
-  "description": "Backend API para Magic Videos - Plataforma de videos personalizados",
-  "main": "index.html",
+  "description": "Magic Videos - Plataforma de videos personalizados",
+  "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "dev": "vercel dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
