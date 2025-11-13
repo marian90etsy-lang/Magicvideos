@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoMágico - Videos Personalizados</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        .video-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.85) 0%, rgba(236, 72, 153, 0.85) 50%, rgba(59, 130, 246, 0.85) 100%);
+            z-index: 1;
+        }
+        
+        .video-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease-out;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .star-rating {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .star {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .star:hover {
+            transform: scale(1.2);
+        }
+
+        .star.filled {
+            color: #fbbf24;
+            fill: #fbbf24;
+        }
+
+        .star.empty {
+            color: #d1d5db;
+            fill: none;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .testimonial-scroll {
+            animation: scroll 30s linear infinite;
+        }
+
+        .testimonial-scroll:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ⚙️ CONFIGURACIÓN DE CLAUDE API
+        // ⚠️ IMPORTANTE: Obtén tu API key en https://console.anthropic.com
+        // Para desarrollo: Pon tu key aquí (NUNCA subas esto a GitHub público)
+        // Para producción: Usa un backend que guarde la key de forma segura
+        const CLAUDE_API_KEY = "TU_API_KEY_AQUI"; // ← Reemplaza con tu key real
+        const USE_CLAUDE_API = false; // ← Cambia a true cuando tengas tu API key
+
+        // 📚 CONOCIMIENTO DE LA EMPRESA (Base de conocimiento para Claude)
+        const CONOCIMIENTO_EMPRESA = `Eres un asistente virtual amigable y entusiasta de VideoMágico, una plataforma que crea videos personalizados con personajes animados para ocasiones especiales.
+
+INFORMACIÓN CLAVE:
+
+1. SERVICIO:
+   - Creamos videos 100% personalizados con personajes animados
+   - Videos profesionales en HD
+   - El cliente elige personaje, tipo de video, duración y escribe su mensaje
+   - 99% de clientes satisfechos, más de 1000 videos creados
+
+2. PERSONAJES DISPONIBLES:
+   - Súper Héroe ($29.99) - Acción, efectos especiales, voz heroica, música épica
+   - Princesa Mágica ($34.99) - Fantasía, castillo, varita mágica, vestido brillante
+   - Dinosaurio Aventurero ($24.99) - Animales, rugido amigable, selva animada
+   - Robot del Espacio ($29.99) - Ciencia ficción, nave espacial, sonidos futuristas
+   - Hada Encantada ($32.99) - Fantasía, alas brillantes, polvo mágico, bosque encantado
+   - Pirata Alegre ($27.99) - Aventura, barco pirata, mapa del tesoro
+
+3. OPCIONES Y PRECIOS:
+   - Precio base: $24.99 - $34.99 (según personaje)
+   - Duraciones:
+     * 30 segundos: Incluido en precio base
+     * 1 minuto: +$10
+     * 2 minutos: +$20
+     * 3 minutos: +$35
+   - Velocidad de entrega:
+     * Estándar (48-72 horas): GRATIS
+     * Rápido (24 horas): +$15
+     * Express (12 horas): +$30
+
+4. TIPOS DE VIDEO:
+   - Cumpleaños (el más popular, con canción y pastel virtual)
+   - Felicitaciones (para logros, graduaciones, etc.)
+   - Motivación (mensajes de ánimo)
+   - Saludo especial (cualquier ocasión)
+
+5. PROCESO:
+   1. Cliente elige su personaje favorito
+   2. Selecciona tipo de video y duración
+   3. Escribe mensaje personalizado (hasta 500 caracteres)
+   4. Agrega al carrito (puede comprar varios)
+   5. Paga de forma segura con Stripe
+   6. Recibe su video en el tiempo elegido
+
+6. GARANTÍAS Y POLÍTICAS:
+   - 2 revisiones incluidas GRATIS
+   - Reembolso completo si no estás satisfecho (primeras 24h)
+   - Pago 100% seguro (Stripe)
+   - Calidad HD profesional garantizada
+   - Soporte al cliente 24/7
+
+7. CALIFICACIÓN Y COMENTARIOS:
+   - Clientes pueden calificar con estrellas (1-5)
+   - Dejar comentarios públicos
+   - Calificación promedio: 4.9/5 estrellas
+
+INSTRUCCIONES DE COMPORTAMIENTO:
+- Sé amigable, entusiasta y empático
+- Usa emojis de forma natural pero sin exceso
+- Ayuda a elegir el personaje ideal según edad/gustos del niño
+- Calcula precios exactos cuando te pregunten
+- Recomienda opciones según presupuesto
+- Si no sabes algo, di que consultarás con el equipo
+- Maneja objeciones de precio mostrando el valor
+- Haz preguntas para entender mejor las necesidades
+- Cierra conversaciones ofreciendo ayuda adicional
+
+EJEMPLOS DE TU TONO:
+- "¡Qué emocionante! 🎉"
+- "Me encantaría ayudarte a crear algo especial"
+- "Déjame calcularte el precio exacto..."
+- "¿Te gustaría que te recomiende según la edad?"
+
+Recuerda: Tu objetivo es ayudar a crear momentos mágicos para niños. Sé cálido, profesional y siempre enfocado en la felicidad del cliente.`;
+
+        // Iconos SVG
+        const Camera = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+        );
+
+        const MessageCircle = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+        );
+
+        const X = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const Send = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        );
+
+        const Star = ({ filled, size = 16 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" className={`star ${filled ? 'filled' : 'empty'}`} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+        );
+
+        const Clock = () => (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        );
+
+        const User = () => (
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+        );
+
+        const Check = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+
+        const ShoppingCart = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+        );
+
+        const Play = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+        );
+
+        const Trash = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        );
+
+        const Plus = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        // Comentarios de ejemplo iniciales
+        const COMENTARIOS_INICIALES = {
+            1: [ // Súper Héroe
+                {
+                    id: 1,
+                    usuario: "María González",
+                    avatar: "https://ui-avatars.com/api/?name=Maria+Gonzalez&background=ec4899&color=fff",
+                    calificacion: 5,
+                    comentario: "¡Increíble! Mi hijo de 4 años no paraba de sonreír. El video quedó perfecto, con efectos especiales y la voz del héroe fue espectacular. 100% recomendado.",
+                    fecha: "Hace 2 días"
+                },
+                {
+                    id: 2,
+                    usuario: "Carlos Ruiz",
+                    avatar: "https://ui-avatars.com/api/?name=Carlos+Ruiz&background=6366f1&color=fff",
+                    calificacion: 5,
+                    comentario: "Excelente trabajo. La calidad del video es profesional y el mensaje personalizado fue justo lo que pedí. Mi sobrino lloró de emoción.",
+                    fecha: "Hace 1 semana"
+                }
+            ],
+            2: [ // Princesa Mágica
+                {
+                    id: 3,
+                    usuario: "Ana Martínez",
+                    avatar: "https://ui-avatars.com/api/?name=Ana+Martinez&background=f472b6&color=fff",
+                    calificacion: 5,
+                    comentario: "¡Mi hija estaba fascinada! El vestido de la princesa brillaba hermoso y el mensaje fue súper tierno. Valió cada centavo.",
+                    fecha: "Hace 3 días"
+                }
+            ],
+            3: [ // Dinosaurio
+                {
+                    id: 4,
+                    usuario: "Pedro López",
+                    avatar: "https://ui-avatars.com/api/?name=Pedro+Lopez&background=10b981&color=fff",
+                    calificacion: 5,
+                    comentario: "Mi hijo ama los dinosaurios y este video superó todas mis expectativas. El rugido fue divertidísimo y los colores espectaculares.",
+                    fecha: "Hace 5 días"
+                }
+            ]
+        };
+
+        // Testimonios para el carrusel
+        const TESTIMONIOS_CARRUSEL = [
+            {
+                id: 1,
+                nombre: "María González",
+                avatar: "https://ui-avatars.com/api/?name=Maria+Gonzalez&background=ec4899&color=fff",
+                comentario: "¡Increíble! Mi hijo no dejaba de sonreír. El video quedó perfecto 🎉",
+                calificacion: 5,
+                personaje: "Súper Héroe"
+            },
+            {
+                id: 2,
+                nombre: "Carlos Ruiz",
+                avatar: "https://ui-avatars.com/api/?name=Carlos+Ruiz&background=6366f1&color=fff",
+                comentario: "Excelente calidad. Mi sobrino lloró de emoción al verlo ❤️",
+                calificacion: 5,
+                personaje: "Princesa Mágica"
+            },
+            {
+                id: 3,
+                nombre: "Ana Martínez",
+                avatar: "https://ui-avatars.com/api/?name=Ana+Martinez&background=f472b6&color=fff",
+                comentario: "¡Mi hija estaba fascinada! Valió cada centavo 💕",
+                calificacion: 5,
+                personaje: "Princesa Mágica"
+            },
+            {
+                id: 4,
+                nombre: "Pedro López",
+                avatar: "https://ui-avatars.com/api/?name=Pedro+Lopez&background=10b981&color=fff",
+                comentario: "Superó todas mis expectativas. El dinosaurio fue genial 🦕",
+                calificacion: 5,
+                personaje: "Dinosaurio"
+            },
+            {
+                id: 5,
+                nombre: "Laura Sánchez",
+                avatar: "https://ui-avatars.com/api/?name=Laura+Sanchez&background=f59e0b&color=fff",
+                comentario: "Servicio rápido y profesional. Muy recomendado ⭐",
+                calificacion: 5,
+                personaje: "Hada Encantada"
+            },
+            {
+                id: 6,
+                nombre: "Roberto Torres",
+                avatar: "https://ui-avatars.com/api/?name=Roberto+Torres&background=8b5cf6&color=fff",
+                comentario: "Mi hijo ama el video del robot. ¡Gracias! 🤖",
+                calificacion: 5,
+                personaje: "Robot del Espacio"
+            },
+            {
+                id: 7,
+                nombre: "Sofia Ramírez",
+                avatar: "https://ui-avatars.com/api/?name=Sofia+Ramirez&background=ec4899&color=fff",
+                comentario: "Perfecto para el cumpleaños. Súper profesional 🎂",
+                calificacion: 5,
+                personaje: "Súper Héroe"
+            },
+            {
+                id: 8,
+                nombre: "Miguel Ángel",
+                avatar: "https://ui-avatars.com/api/?name=Miguel+Angel&background=3b82f6&color=fff",
+                comentario: "Entrega rápida y calidad increíble. 100% recomendado ✨",
+                calificacion: 5,
+                personaje: "Pirata Alegre"
+            }
+        ];
+
+        // Datos de personajes
+        const PERSONAJES = [
+            {
+                id: 1,
+                nombre: "Súper Héroe",
+                descripcion: "El héroe más valiente del universo está listo para enviar un mensaje especial. Con su capa al viento y sus poderes increíbles, hará que tu celebración sea inolvidable.",
+                precioBase: 29.99,
+                imagen: "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=400&h=400&fit=crop",
+                categoria: "Acción",
+                rating: 4.9,
+                videos: 156,
+                videoMuestra: "https://www.w3schools.com/html/mov_bbb.mp4",
+                caracteristicas: ["Voz heroica", "Efectos especiales", "Fondo personalizable", "Música épica"],
+                isFavorito: true,
+                isNuevo: false
+            },
+            {
+                id: 2,
+                nombre: "Princesa Mágica",
+                descripcion: "Una princesa encantada con poderes mágicos que hará brillar cualquier ocasión especial con su dulzura y magia.",
+                precioBase: 34.99,
+                imagen: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&h=400&fit=crop",
+                categoria: "Fantasía",
+                rating: 5.0,
+                videos: 203,
+                videoMuestra: "https://www.w3schools.com/html/mov_bbb.mp4",
+                caracteristicas: ["Vestido brillante", "Varita mágica", "Castillo de fondo", "Música de cuento"],
+                isFavorito: true,
+                isNuevo: false
+            },
+            {
+                id: 3,
+                nombre: "Dinosaurio Aventurero",
+                descripcion: "El dinosaurio más amigable y divertido del mundo prehistórico. Perfecto para los pequeños amantes de los dinos.",
+                precioBase: 24.99,
+                imagen: "https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=400&h=400&fit=crop",
+                categoria: "Animales",
+                rating: 4.8,
+                videos: 128,
+                videoMuestra: "https://www.w3schools.com/html/mov_bbb.mp4",
+                caracteristicas: ["Rugido amigable", "Selva animada", "Colores vibrantes", "Aventuras"],
+                isFavorito: true,
+                isNuevo: false
+            },
+            {
+                id: 4,
+                nombre: "Robot del Espacio",
+                descripcion: "Tecnología y diversión intergaláctica combinadas en un robot súper cool que viene desde el espacio exterior.",
+                precioBase: 29.99,
+                imagen: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=400&h=400&fit=crop",
+                categoria: "Ciencia Ficción",
+                rating: 4.7,
+                videos: 94,
+                videoMuestra: "https://www.w3schools.com/html/mov_bbb.mp4",
+                caracteristicas: ["Sonidos futuristas", "Nave espacial", "Planetas animados", "Luces LED"],
+                isFavorito: false,
+                isNuevo: true
+            },
+            {
+                id: 5,
+                nombre: "Hada Encantada",
+                descripcion: "Magia pura y sueños hechos realidad. Esta hada especial trae polvo de estrellas y deseos cumplidos.",
+                precioBase: 32.99,
+                imagen: "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=400&h=400&fit=crop",
+                categoria: "Fantasía",
+                rating: 4.9,
+                videos: 167,
+                videoMuestra: "https://www.w3schools.com/html/mov_bbb.mp4",
+                caracteristicas: ["Alas brillantes", "Polvo mágico", "Bosque encantado", "Música celestial"],
+                isFavorito: true,
+                isNuevo: false
+            },
+            {
+                id: 6,
+                nombre: "Pirata Alegre",
+                descripcion: "¡Ahoy! Un pirata aventurero en busca de tesoros y diversión. Perfecto para pequeños exploradores.",
+                precioBase: 27.99,
+                imagen: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
+                categoria: "Aventura",
+                rating: 4.6,
+                videos: 89,
+                videoMuestra: "https://www.w3schools.com/html/mov_bbb.mp4",
+                caracteristicas: ["Barco pirata", "Mapa del tesoro", "Loro parlanchín", "Música de mar"],
+                isFavorito: false,
+                isNuevo: true
+            }
+        ];
+
+        const TIPOS_VIDEO = [
+            { id: 'cumpleanos', nombre: 'Cumpleaños', icono: '🎂', descripcion: 'Felicitación especial de cumpleaños' },
+            { id: 'felicitaciones', nombre: 'Felicitaciones', icono: '🎉', descripcion: 'Para cualquier logro o celebración' },
+            { id: 'motivacion', nombre: 'Motivación', icono: '💪', descripcion: 'Mensaje de ánimo y motivación' },
+            { id: 'saludo', nombre: 'Saludo Especial', icono: '👋', descripcion: 'Saludo personalizado' }
+        ];
+
+        const DURACIONES = [
+            { id: '30s', nombre: '30 segundos', segundos: 30, precioExtra: 0 },
+            { id: '1min', nombre: '1 minuto', segundos: 60, precioExtra: 10 },
+            { id: '2min', nombre: '2 minutos', segundos: 120, precioExtra: 20 },
+            { id: '3min', nombre: '3 minutos', segundos: 180, precioExtra: 35 }
+        ];
+
+        const VELOCIDADES_ENTREGA = [
+            { id: 'estandar', nombre: 'Estándar (48-72h)', horas: 72, precioExtra: 0 },
+            { id: 'rapido', nombre: 'Rápido (24h)', horas: 24, precioExtra: 15 },
+            { id: 'express', nombre: 'Express (12h)', horas: 12, precioExtra: 30 }
+        ];
+
+        function App() {
+            const [currentPage, setCurrentPage] = useState('home');
+            const [selectedPersonaje, setSelectedPersonaje] = useState(null);
+            const [selectedTipoVideo, setSelectedTipoVideo] = useState(null);
+            const [selectedDuracion, setSelectedDuracion] = useState(DURACIONES[0]);
+            const [customMessage, setCustomMessage] = useState('');
+            const [user, setUser] = useState(null);
+            const [carrito, setCarrito] = useState([]);
+            const [pedidos, setPedidos] = useState([]);
+            const [showChatbot, setShowChatbot] = useState(false);
+            const [chatMessages, setChatMessages] = useState([]);
+            const [chatInput, setChatInput] = useState('');
+            const [isTyping, setIsTyping] = useState(false);
+            const [showCarrito, setShowCarrito] = useState(false);
+            const [comentarios, setComentarios] = useState(COMENTARIOS_INICIALES);
+            const [showReviewModal, setShowReviewModal] = useState(false);
+            const [reviewPedido, setReviewPedido] = useState(null);
+            const [reviewCalificacion, setReviewCalificacion] = useState(0);
+            const [reviewComentario, setReviewComentario] = useState('');
+            const chatEndRef = useRef(null);
+
+            useEffect(() => {
+                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [chatMessages]);
+
+            useEffect(() => {
+                if (showChatbot && chatMessages.length === 0) {
+                    setTimeout(() => {
+                        setChatMessages([{
+                            type: 'bot',
+                            message: '¡Hola! 👋 Soy tu asistente virtual. ¿En qué puedo ayudarte?',
+                            time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                        }]);
+                    }, 500);
+                }
+            }, [showChatbot, chatMessages.length]);
+
+            const handleLogin = (e) => {
+                if (e) e.preventDefault();
+                const mockUser = {
+                    id: 1,
+                    nombre: 'Usuario Demo',
+                    email: 'demo@ejemplo.com',
+                    avatar: 'https://ui-avatars.com/api/?name=Usuario+Demo&background=6366f1&color=fff'
+                };
+                setUser(mockUser);
+                alert('✅ ¡Sesión iniciada!');
+                setCurrentPage('galeria');
+            };
+
+            const handleSendMessage = async (e) => {
+                if (e) e.preventDefault();
+                if (!chatInput.trim()) return;
+
+                const userMessage = {
+                    type: 'user',
+                    message: chatInput,
+                    time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                };
+
+                setChatMessages(prev => [...prev, userMessage]);
+                const msgToProcess = chatInput;
+                setChatInput('');
+                setIsTyping(true);
+
+                try {
+                    let responseText = '';
+
+                    if (USE_CLAUDE_API && CLAUDE_API_KEY !== "TU_API_KEY_AQUI") {
+                        // ✨ MODO CLAUDE API - Respuestas inteligentes y naturales
+                        
+                        // Construir historial de conversación para Claude
+                        const claudeMessages = chatMessages.map(msg => ({
+                            role: msg.type === 'user' ? 'user' : 'assistant',
+                            content: msg.message
+                        }));
+                        
+                        // Agregar mensaje actual
+                        claudeMessages.push({
+                            role: 'user',
+                            content: msgToProcess
+                        });
+
+                        const response = await fetch("https://api.anthropic.com/v1/messages", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-api-key": CLAUDE_API_KEY,
+                                "anthropic-version": "2023-06-01"
+                            },
+                            body: JSON.stringify({
+                                model: "claude-sonnet-4-20250514",
+                                max_tokens: 1000,
+                                system: CONOCIMIENTO_EMPRESA, // ← Base de conocimiento
+                                messages: claudeMessages
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Error de API: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        responseText = data.content[0].text;
+
+                    } else {
+                        // 🤖 MODO SIMULADO - Respuestas básicas (fallback)
+                        const msg = msgToProcess.toLowerCase();
+                        
+                        if (msg.includes('precio') || msg.includes('cuesta') || msg.includes('cuanto')) {
+                            responseText = '💰 **Precios de VideoMágico:**\n\n📦 Base: $24.99 - $34.99 según personaje\n⏱️ Duración extra: +$10 a +$35\n🚀 Entrega rápida: +$15 (24h) o +$30 (12h)\n\n¿Te gustaría que te calcule un precio exacto para lo que necesitas?';
+                        } else if (msg.includes('personaje') || msg.includes('cuales') || msg.includes('qué hay')) {
+                            responseText = '🎭 **Nuestros personajes:**\n\n🦸 Súper Héroe - $29.99\n👸 Princesa Mágica - $34.99\n🦕 Dinosaurio - $24.99\n🤖 Robot del Espacio - $29.99\n🧚 Hada Encantada - $32.99\n🏴‍☠️ Pirata Alegre - $27.99\n\n¿Cuál crees que le gustaría más?';
+                        } else if (msg.includes('tiempo') || msg.includes('entrega') || msg.includes('tarda') || msg.includes('demora')) {
+                            responseText = '⏰ **Tiempos de entrega:**\n\n📦 Estándar: 48-72 horas (GRATIS)\n⚡ Rápido: 24 horas (+$15)\n🚀 Express: 12 horas (+$30)\n\n¿Cuándo lo necesitas?';
+                        } else if (msg.includes('funciona') || msg.includes('como') || msg.includes('proceso')) {
+                            responseText = '🎬 **Proceso súper fácil:**\n\n1️⃣ Elige tu personaje favorito\n2️⃣ Selecciona tipo y duración\n3️⃣ Escribe tu mensaje personalizado\n4️⃣ Paga de forma segura\n5️⃣ ¡Recibe tu video mágico!\n\n¿Te ayudo a empezar?';
+                        } else if (msg.includes('edad') || msg.includes('años') || msg.includes('niño') || msg.includes('niña')) {
+                            responseText = '👶 **Recomendaciones por edad:**\n\n2-4 años: Dinosaurio o Princesa\n5-7 años: Súper Héroe o Hada\n8+ años: Robot o Pirata\n\n¿Cuántos años tiene?';
+                        } else if (msg.includes('gracias') || msg.includes('perfecto') || msg.includes('ok')) {
+                            responseText = '¡De nada! 😊 Estoy aquí para ayudarte. ¿Algo más en lo que pueda asistirte?';
+                        } else if (msg.includes('hola') || msg.includes('buenas') || msg.includes('hi')) {
+                            responseText = '¡Hola! 👋 Bienvenido a VideoMágico 🎬✨\n\nCreamos videos personalizados con tus personajes favoritos. ¿En qué puedo ayudarte hoy?\n\n• Ver personajes\n• Conocer precios\n• Explicar cómo funciona';
+                        } else {
+                            responseText = 'Entiendo. 🤔 Déjame ayudarte mejor:\n\n¿Quieres saber sobre:\n• Personajes disponibles\n• Precios y opciones\n• Tiempos de entrega\n• Cómo hacer tu pedido';
+                        }
+
+                        // Agregar nota de upgrade si no tiene API key
+                        if (!USE_CLAUDE_API || CLAUDE_API_KEY === "TU_API_KEY_AQUI") {
+                            responseText += '\n\n💡 *Tip: Activa Claude API para respuestas más naturales e inteligentes*';
+                        }
+                    }
+
+                    setChatMessages(prev => [...prev, {
+                        type: 'bot',
+                        message: responseText,
+                        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                    }]);
+
+                } catch (error) {
+                    console.error('Error en chatbot:', error);
+                    setChatMessages(prev => [...prev, {
+                        type: 'bot',
+                        message: '❌ Lo siento, tuve un problema técnico. ¿Puedes intentar de nuevo?\n\nSi el problema persiste, contáctanos por email: soporte@videomagico.com',
+                        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                    }]);
+                } finally {
+                    setIsTyping(false);
+                }
+            };
+
+            const handleVerDetalle = (personaje) => {
+                setSelectedPersonaje(personaje);
+                setSelectedTipoVideo(null);
+                setSelectedDuracion(DURACIONES[0]);
+                setCustomMessage('');
+                setCurrentPage('detalle-personaje');
+            };
+
+            const handleAgregarAlCarrito = () => {
+                if (!selectedTipoVideo) {
+                    alert('⚠️ Selecciona el tipo de video');
+                    return;
+                }
+
+                if (!customMessage.trim()) {
+                    alert('⚠️ Escribe tu mensaje personalizado');
+                    return;
+                }
+
+                const nuevoItem = {
+                    id: Date.now(),
+                    personaje: selectedPersonaje,
+                    tipoVideo: selectedTipoVideo,
+                    duracion: selectedDuracion,
+                    mensaje: customMessage,
+                    precioBase: selectedPersonaje.precioBase,
+                    precioTotal: selectedPersonaje.precioBase + selectedDuracion.precioExtra,
+                    velocidadEntrega: VELOCIDADES_ENTREGA[0]
+                };
+
+                setCarrito(prev => [...prev, nuevoItem]);
+                alert('✅ ¡Agregado al carrito!');
+                setShowCarrito(true);
+            };
+
+            const handleEliminarDelCarrito = (itemId) => {
+                setCarrito(prev => prev.filter(item => item.id !== itemId));
+            };
+
+            const handleCambiarVelocidad = (itemId, velocidad) => {
+                setCarrito(prev => prev.map(item => {
+                    if (item.id === itemId) {
+                        return {
+                            ...item,
+                            velocidadEntrega: velocidad,
+                            precioTotal: item.precioBase + item.duracion.precioExtra + velocidad.precioExtra
+                        };
+                    }
+                    return item;
+                }));
+            };
+
+            const calcularTotal = () => {
+                return carrito.reduce((total, item) => {
+                    return total + item.precioBase + item.duracion.precioExtra + item.velocidadEntrega.precioExtra;
+                }, 0);
+            };
+
+            const handleProcederAlCheckout = () => {
+                if (carrito.length === 0) {
+                    alert('⚠️ Tu carrito está vacío');
+                    return;
+                }
+
+                if (!user) {
+                    alert('⚠️ Inicia sesión primero');
+                    setCurrentPage('login');
+                    return;
+                }
+
+                setCurrentPage('checkout');
+                setShowCarrito(false);
+            };
+
+            const handleStripeCheckout = () => {
+                const totalPedido = calcularTotal();
+                alert(`🎉 ¡Pago procesado!\n\n💰 Total: $${totalPedido.toFixed(2)}\n📦 Items: ${carrito.length}`);
+                
+                const nuevosPedidos = carrito.map(item => ({
+                    id: `PED-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    ...item,
+                    estado: 'En proceso',
+                    progreso: 25,
+                    fechaPedido: new Date().toLocaleDateString('es-ES'),
+                    fechaEstimada: new Date(Date.now() + item.velocidadEntrega.horas * 60 * 60 * 1000).toLocaleDateString('es-ES'),
+                    puedeCalificar: false
+                }));
+                
+                setPedidos(prev => [...nuevosPedidos, ...prev]);
+                setCarrito([]);
+                setCurrentPage('mis-pedidos');
+            };
+
+            const simulateProgress = (pedidoId) => {
+                setPedidos(prev => prev.map(p => {
+                    if (p.id === pedidoId) {
+                        let newEstado = p.estado;
+                        let newProgreso = p.progreso;
+                        let puedeCalificar = p.puedeCalificar;
+                        
+                        if (p.progreso === 25) {
+                            newEstado = 'En edición';
+                            newProgreso = 50;
+                        } else if (p.progreso === 50) {
+                            newEstado = 'En revisión';
+                            newProgreso = 75;
+                        } else if (p.progreso === 75) {
+                            newEstado = 'Completado';
+                            newProgreso = 100;
+                            puedeCalificar = true;
+                            alert('✅ ¡Video completado!\n\nAhora puedes calificarlo y dejar tu opinión.');
+                        }
+                        
+                        return { ...p, estado: newEstado, progreso: newProgreso, puedeCalificar: puedeCalificar };
+                    }
+                    return p;
+                }));
+            };
+
+            // Abrir modal de calificación
+            const handleAbrirReview = (pedido) => {
+                setReviewPedido(pedido);
+                setReviewCalificacion(0);
+                setReviewComentario('');
+                setShowReviewModal(true);
+            };
+
+            // Enviar calificación
+            const handleEnviarReview = () => {
+                if (reviewCalificacion === 0) {
+                    alert('⚠️ Selecciona una calificación');
+                    return;
+                }
+
+                if (!reviewComentario.trim()) {
+                    alert('⚠️ Escribe tu comentario');
+                    return;
+                }
+
+                const nuevoComentario = {
+                    id: Date.now(),
+                    usuario: user.nombre,
+                    avatar: user.avatar,
+                    calificacion: reviewCalificacion,
+                    comentario: reviewComentario,
+                    fecha: 'Ahora'
+                };
+
+                const personajeId = reviewPedido.personaje.id;
+                setComentarios(prev => ({
+                    ...prev,
+                    [personajeId]: [nuevoComentario, ...(prev[personajeId] || [])]
+                }));
+
+                // Marcar pedido como calificado
+                setPedidos(prev => prev.map(p => 
+                    p.id === reviewPedido.id ? { ...p, calificado: true } : p
+                ));
+
+                alert('✅ ¡Gracias por tu calificación!');
+                setShowReviewModal(false);
+                setReviewPedido(null);
+            };
+
+            // Componente de rating de estrellas
+            const StarRating = ({ value, onChange, readonly = false, size = 24 }) => {
+                return (
+                    <div className="star-rating">
+                        {[1, 2, 3, 4, 5].map(star => (
+                            <span
+                                key={star}
+                                onClick={() => !readonly && onChange && onChange(star)}
+                                style={{ cursor: readonly ? 'default' : 'pointer' }}
+                            >
+                                <Star filled={star <= value} size={size} />
+                            </span>
+                        ))}
+                    </div>
+                );
+            };
+
+            const Header = () => (
+                <header className="bg-white shadow-sm sticky top-0 z-40">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-16">
+                            <div 
+                                className="flex items-center cursor-pointer" 
+                                onClick={() => setCurrentPage('home')}
+                            >
+                                <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-lg">
+                                    <Camera />
+                                </div>
+                                <span className="ml-3 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    VideoMágico
+                                </span>
+                            </div>
+
+                            <div className="flex items-center space-x-4">
+                                <button
+                                    onClick={() => setShowCarrito(!showCarrito)}
+                                    className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                >
+                                    <ShoppingCart />
+                                    {carrito.length > 0 && (
+                                        <span className="cart-badge">{carrito.length}</span>
+                                    )}
+                                </button>
+
+                                {user ? (
+                                    <>
+                                        <button
+                                            onClick={() => setCurrentPage('mis-pedidos')}
+                                            className="px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
+                                        >
+                                            Mis Pedidos
+                                        </button>
+                                        <div className="h-10 w-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold">
+                                            U
+                                        </div>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => setCurrentPage('login')}
+                                        className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+                                    >
+                                        Iniciar Sesión
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            );
+
+            // Panel del carrito (simplificado por espacio - igual que antes)
+            const CarritoPanel = () => (
+                <>
+                    {showCarrito && (
+                        <>
+                            <div 
+                                className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                                onClick={() => setShowCarrito(false)}
+                            ></div>
+                            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto">
+                                <div className="p-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-bold">Carrito</h2>
+                                        <button onClick={() => setShowCarrito(false)}>
+                                            <X />
+                                        </button>
+                                    </div>
+
+                                    {carrito.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <p className="text-gray-600 mt-4">Tu carrito está vacío</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="space-y-4 mb-6">
+                                                {carrito.map(item => (
+                                                    <div key={item.id} className="bg-gray-50 rounded-lg p-4">
+                                                        <div className="flex items-start space-x-3 mb-3">
+                                                            <img 
+                                                                src={item.personaje.imagen} 
+                                                                alt={item.personaje.nombre}
+                                                                className="w-16 h-16 rounded-lg object-cover"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <h3 className="font-bold text-sm">{item.personaje.nombre}</h3>
+                                                                <p className="text-xs text-gray-600">{item.tipoVideo.nombre}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleEliminarDelCarrito(item.id)}
+                                                                className="text-red-600 p-1"
+                                                            >
+                                                                <Trash />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            {VELOCIDADES_ENTREGA.map(vel => (
+                                                                <label key={vel.id} className="flex items-center space-x-2 text-sm">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`velocidad-${item.id}`}
+                                                                        checked={item.velocidadEntrega.id === vel.id}
+                                                                        onChange={() => handleCambiarVelocidad(item.id, vel)}
+                                                                    />
+                                                                    <span>{vel.nombre}</span>
+                                                                    <span className="font-semibold text-purple-600">
+                                                                        {vel.precioExtra > 0 ? `+$${vel.precioExtra}` : 'Gratis'}
+                                                                    </span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="border-t pt-4 mb-4">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-semibold">Total:</span>
+                                                    <span className="text-2xl font-bold text-purple-600">
+                                                        ${calcularTotal().toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleProcederAlCheckout}
+                                                className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg"
+                                            >
+                                                Proceder al Pago
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </>
+            );
+
+            // Chatbot (simplificado)
+            const Chatbot = () => (
+                <>
+                    {!showChatbot && (
+                        <button
+                            onClick={() => setShowChatbot(true)}
+                            className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all z-50"
+                        >
+                            <MessageCircle />
+                        </button>
+                    )}
+
+                    {showChatbot && (
+                        <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl z-50 flex flex-col" style={{height: '500px'}}>
+                            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-t-2xl flex justify-between items-center">
+                                <h3 className="font-semibold">Asistente Virtual</h3>
+                                <button onClick={() => setShowChatbot(false)}>
+                                    <X />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                                {chatMessages.map((msg, idx) => (
+                                    <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[85%] ${msg.type === 'user' ? 'bg-purple-600 text-white' : 'bg-white border'} rounded-2xl px-4 py-2`}>
+                                            <p className="text-sm">{msg.message}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div ref={chatEndRef} />
+                            </div>
+
+                            <div className="p-4 border-t">
+                                <div className="flex space-x-2">
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                        placeholder="Escribe..."
+                                        className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-purple-600"
+                                    />
+                                    <button
+                                        onClick={handleSendMessage}
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 rounded-full"
+                                    >
+                                        <Send />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+
+            // Modal de calificación
+            const ReviewModal = () => (
+                <>
+                    {showReviewModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl max-w-lg w-full p-8">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h2 className="text-2xl font-bold mb-2">Califica tu Video</h2>
+                                        <p className="text-gray-600">{reviewPedido?.personaje.nombre}</p>
+                                    </div>
+                                    <button onClick={() => setShowReviewModal(false)}>
+                                        <X />
+                                    </button>
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium mb-3">Tu calificación:</label>
+                                    <StarRating 
+                                        value={reviewCalificacion} 
+                                        onChange={setReviewCalificacion}
+                                        size={32}
+                                    />
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium mb-2">Tu comentario:</label>
+                                    <textarea
+                                        value={reviewComentario}
+                                        onChange={(e) => setReviewComentario(e.target.value)}
+                                        placeholder="Cuéntanos tu experiencia..."
+                                        rows={6}
+                                        maxLength={500}
+                                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none"
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">{reviewComentario.length}/500</p>
+                                </div>
+
+                                <div className="flex space-x-3">
+                                    <button
+                                        onClick={() => setShowReviewModal(false)}
+                                        className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleEnviarReview}
+                                        disabled={reviewCalificacion === 0 || !reviewComentario.trim()}
+                                        className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50"
+                                    >
+                                        Publicar Calificación
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+
+            // HOME (simplificado)
+            if (currentPage === 'home') {
+                return (
+                    <div className="min-h-screen bg-gray-50">
+                        <Header />
+                        
+                        <section className="relative h-screen min-h-[600px] overflow-hidden">
+                            <video autoPlay loop muted playsInline className="video-background">
+                                <source src="Avatar_IV_Video.mp4" type="video/mp4" />
+                            </video>
+                            
+                            <div className="video-overlay"></div>
+                            
+                            <div className="video-content h-full flex items-center justify-center">
+                                <div className="max-w-7xl mx-auto px-4 text-center fade-in">
+                                    <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white leading-tight drop-shadow-2xl">
+                                        Videos Mágicos<br />Para Momentos Especiales
+                                    </h1>
+                                    <p className="text-xl md:text-2xl text-white mb-8 max-w-3xl mx-auto drop-shadow-lg">
+                                        Haz que sus personajes favoritos cobren vida con mensajes personalizados
+                                    </p>
+
+                                    {/* Estadísticas */}
+                                    <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto mb-8">
+                                        <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white border-opacity-30">
+                                            <div className="text-3xl md:text-5xl font-bold text-yellow-300 mb-2">1000+</div>
+                                            <div className="text-sm md:text-base text-white font-semibold">Videos Creados</div>
+                                        </div>
+                                        <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white border-opacity-30">
+                                            <div className="text-3xl md:text-5xl font-bold text-yellow-300 mb-2">4.9/5</div>
+                                            <div className="flex justify-center mb-2">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <Star key={star} filled size={16} />
+                                                ))}
+                                            </div>
+                                            <div className="text-sm md:text-base text-white font-semibold">Calificación</div>
+                                        </div>
+                                        <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white border-opacity-30">
+                                            <div className="text-3xl md:text-5xl font-bold text-yellow-300 mb-2">99%</div>
+                                            <div className="text-sm md:text-base text-white font-semibold">Clientes Satisfechos</div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setCurrentPage('galeria')}
+                                        className="px-8 py-4 bg-white text-purple-600 text-lg font-semibold rounded-full hover:shadow-2xl transition-all inline-flex items-center space-x-2 transform hover:scale-105"
+                                    >
+                                        <span>Crear Mi Video</span>
+                                        <Play />
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Carrusel de Testimonios */}
+                        <section className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 py-6 overflow-hidden">
+                            <div className="flex space-x-8 testimonial-scroll">
+                                {/* Duplicamos los testimonios para el efecto infinito */}
+                                {[...TESTIMONIOS_CARRUSEL, ...TESTIMONIOS_CARRUSEL].map((testimonio, idx) => (
+                                    <div 
+                                        key={`${testimonio.id}-${idx}`}
+                                        className="flex-shrink-0 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl p-4 min-w-[300px] md:min-w-[400px]"
+                                    >
+                                        <div className="flex items-start space-x-3">
+                                            <img 
+                                                src={testimonio.avatar} 
+                                                alt={testimonio.nombre}
+                                                className="w-12 h-12 rounded-full border-2 border-white"
+                                            />
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <h4 className="font-bold text-white text-sm">{testimonio.nombre}</h4>
+                                                    <div className="flex">
+                                                        {[...Array(testimonio.calificacion)].map((_, i) => (
+                                                            <Star key={i} filled size={14} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-purple-100 mb-2">Video de {testimonio.personaje}</p>
+                                                <p className="text-white text-sm">{testimonio.comentario}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="py-20 bg-white">
+                            <div className="max-w-7xl mx-auto px-4">
+                                <div className="grid md:grid-cols-3 gap-8">
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-8 rounded-2xl text-center">
+                                        <Camera />
+                                        <h3 className="text-xl font-bold mt-4">100% Personalizado</h3>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-8 rounded-2xl text-center">
+                                        <Clock />
+                                        <h3 className="text-xl font-bold mt-4">Entrega Flexible</h3>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl text-center">
+                                        <Star filled size={32} />
+                                        <h3 className="text-xl font-bold mt-4">Alta Calidad</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Favoritos */}
+                        <section className="py-20 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+                            <div className="max-w-7xl mx-auto px-4">
+                                <h2 className="text-4xl font-bold mb-8">⭐ Personajes Favoritos</h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                    {PERSONAJES.filter(p => p.isFavorito).map(personaje => (
+                                        <div
+                                            key={personaje.id}
+                                            onClick={() => handleVerDetalle(personaje)}
+                                            className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl cursor-pointer"
+                                        >
+                                            <img src={personaje.imagen} className="w-full h-48 object-cover" />
+                                            <div className="p-4">
+                                                <h3 className="font-bold text-sm">{personaje.nombre}</h3>
+                                                <p className="text-xs text-purple-600 font-bold">Desde ${personaje.precioBase}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Nuevos */}
+                        <section className="py-20 bg-white">
+                            <div className="max-w-7xl mx-auto px-4">
+                                <h2 className="text-4xl font-bold mb-8">🆕 Recién Llegados</h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                                    {PERSONAJES.filter(p => p.isNuevo).map(personaje => (
+                                        <div
+                                            key={personaje.id}
+                                            onClick={() => handleVerDetalle(personaje)}
+                                            className="bg-white rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                                        >
+                                            <div className="relative">
+                                                <img src={personaje.imagen} className="w-full h-48 object-cover" />
+                                                <div className="absolute top-2 left-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                                    NUEVO
+                                                </div>
+                                            </div>
+                                            <div className="p-4">
+                                                <h3 className="font-bold text-sm">{personaje.nombre}</h3>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="text-center">
+                                    <button
+                                        onClick={() => setCurrentPage('galeria')}
+                                        className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-full"
+                                    >
+                                        <Plus />
+                                        <span>Ver Todos los Personajes</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <CarritoPanel />
+                        <Chatbot />
+                    </div>
+                );
+            }
+
+            // GALERÍA (simplificada)
+            if (currentPage === 'galeria') {
+                return (
+                    <div className="min-h-screen bg-gray-50">
+                        <Header />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold mb-8">Todos los Personajes</h1>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {PERSONAJES.map(personaje => (
+                                    <div
+                                        key={personaje.id}
+                                        onClick={() => handleVerDetalle(personaje)}
+                                        className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl cursor-pointer"
+                                    >
+                                        <img src={personaje.imagen} className="w-full h-64 object-cover" />
+                                        <div className="p-6">
+                                            <h3 className="text-xl font-bold mb-2">{personaje.nombre}</h3>
+                                            <div className="flex items-center justify-between">
+                                                <StarRating value={Math.round(personaje.rating)} readonly size={16} />
+                                                <span className="font-bold text-purple-600">Desde ${personaje.precioBase}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <CarritoPanel />
+                        <Chatbot />
+                    </div>
+                );
+            }
+
+            // DETALLE DEL PERSONAJE con COMENTARIOS
+            if (currentPage === 'detalle-personaje' && selectedPersonaje) {
+                const comentariosPersonaje = comentarios[selectedPersonaje.id] || [];
+                
+                return (
+                    <div className="min-h-screen bg-gray-50">
+                        <Header />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <button
+                                onClick={() => setCurrentPage('galeria')}
+                                className="mb-6 text-purple-600 font-medium"
+                            >
+                                ← Volver
+                            </button>
+
+                            <div className="grid md:grid-cols-2 gap-8 mb-12">
+                                {/* Video y detalles */}
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                                        <video controls className="w-full" poster={selectedPersonaje.imagen}>
+                                            <source src={selectedPersonaje.videoMuestra} type="video/mp4" />
+                                        </video>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-lg p-6">
+                                        <h1 className="text-3xl font-bold mb-4">{selectedPersonaje.nombre}</h1>
+                                        <p className="text-gray-700 mb-4">{selectedPersonaje.descripcion}</p>
+                                        <div className="flex items-center space-x-2 mb-4">
+                                            <StarRating value={Math.round(selectedPersonaje.rating)} readonly />
+                                            <span className="font-semibold">{selectedPersonaje.rating}</span>
+                                            <span className="text-gray-600">({selectedPersonaje.videos} videos)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Configuración */}
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-xl shadow-lg p-6">
+                                        <h2 className="text-xl font-bold mb-4">1. Tipo de Video</h2>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {TIPOS_VIDEO.map(tipo => (
+                                                <button
+                                                    key={tipo.id}
+                                                    onClick={() => setSelectedTipoVideo(tipo)}
+                                                    className={`p-4 rounded-lg border-2 ${
+                                                        selectedTipoVideo?.id === tipo.id
+                                                            ? 'border-purple-600 bg-purple-50'
+                                                            : 'border-gray-200'
+                                                    }`}
+                                                >
+                                                    <div className="text-3xl">{tipo.icono}</div>
+                                                    <h3 className="font-semibold text-sm mt-2">{tipo.nombre}</h3>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-lg p-6">
+                                        <h2 className="text-xl font-bold mb-4">2. Duración</h2>
+                                        <div className="space-y-3">
+                                            {DURACIONES.map(dur => (
+                                                <label
+                                                    key={dur.id}
+                                                    className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer ${
+                                                        selectedDuracion.id === dur.id
+                                                            ? 'border-purple-600 bg-purple-50'
+                                                            : 'border-gray-200'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center space-x-3">
+                                                        <input
+                                                            type="radio"
+                                                            checked={selectedDuracion.id === dur.id}
+                                                            onChange={() => setSelectedDuracion(dur)}
+                                                        />
+                                                        <span className="font-semibold">{dur.nombre}</span>
+                                                    </div>
+                                                    <span className="font-bold text-purple-600">
+                                                        {dur.precioExtra > 0 ? `+$${dur.precioExtra}` : 'Incluido'}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-lg p-6">
+                                        <h2 className="text-xl font-bold mb-4">3. Tu Mensaje</h2>
+                                        <textarea
+                                            value={customMessage}
+                                            onChange={(e) => setCustomMessage(e.target.value)}
+                                            placeholder="Escribe tu mensaje personalizado..."
+                                            rows={6}
+                                            maxLength={500}
+                                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none"
+                                        />
+                                        <p className="text-sm text-gray-500 mt-2">{customMessage.length}/500</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-lg p-6">
+                                        <div className="flex justify-between mb-4">
+                                            <span className="font-bold">Total:</span>
+                                            <span className="text-2xl font-bold text-purple-600">
+                                                ${(selectedPersonaje.precioBase + selectedDuracion.precioExtra).toFixed(2)}
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            onClick={handleAgregarAlCarrito}
+                                            disabled={!selectedTipoVideo || !customMessage.trim()}
+                                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg disabled:opacity-50"
+                                        >
+                                            Agregar al Carrito
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECCIÓN DE COMENTARIOS */}
+                            <div className="bg-white rounded-xl shadow-lg p-8">
+                                <h2 className="text-3xl font-bold mb-6">
+                                    💬 Opiniones de Clientes ({comentariosPersonaje.length})
+                                </h2>
+
+                                {comentariosPersonaje.length === 0 ? (
+                                    <p className="text-gray-600 text-center py-8">
+                                        Sé el primero en dejar una opinión sobre este personaje
+                                    </p>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {comentariosPersonaje.map(comentario => (
+                                            <div key={comentario.id} className="border-b border-gray-200 pb-6 last:border-0">
+                                                <div className="flex items-start space-x-4">
+                                                    <img 
+                                                        src={comentario.avatar} 
+                                                        alt={comentario.usuario}
+                                                        className="w-12 h-12 rounded-full"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div>
+                                                                <h4 className="font-bold">{comentario.usuario}</h4>
+                                                                <p className="text-sm text-gray-500">{comentario.fecha}</p>
+                                                            </div>
+                                                            <StarRating value={comentario.calificacion} readonly size={18} />
+                                                        </div>
+                                                        <p className="text-gray-700">{comentario.comentario}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <CarritoPanel />
+                        <Chatbot />
+                    </div>
+                );
+            }
+
+            // LOGIN (simplificado)
+            if (currentPage === 'login') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-4">
+                        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+                            <div className="text-center mb-8">
+                                <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-3 rounded-full inline-block mb-4">
+                                    <User />
+                                </div>
+                                <h2 className="text-3xl font-bold">Bienvenido</h2>
+                            </div>
+
+                            <button
+                                onClick={handleLogin}
+                                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg"
+                            >
+                                Iniciar Sesión (Demo)
+                            </button>
+                        </div>
+                        <Chatbot />
+                    </div>
+                );
+            }
+
+            // CHECKOUT (simplificado)
+            if (currentPage === 'checkout') {
+                return (
+                    <div className="min-h-screen bg-gray-50">
+                        <Header />
+                        <div className="max-w-4xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold mb-8">Finalizar Pedido</h1>
+
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div className="bg-white rounded-xl shadow-lg p-6">
+                                    <h2 className="text-xl font-bold mb-6">Resumen</h2>
+                                    {carrito.map(item => (
+                                        <div key={item.id} className="mb-4">
+                                            <p className="font-semibold">{item.personaje.nombre}</p>
+                                            <p className="text-sm text-gray-600">${(item.precioBase + item.duracion.precioExtra + item.velocidadEntrega.precioExtra).toFixed(2)}</p>
+                                        </div>
+                                    ))}
+                                    <div className="border-t pt-4 mt-4">
+                                        <div className="flex justify-between text-2xl font-bold">
+                                            <span>Total:</span>
+                                            <span className="text-purple-600">${calcularTotal().toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-xl shadow-lg p-6">
+                                    <h2 className="text-xl font-bold mb-6">Pago</h2>
+                                    <button
+                                        onClick={handleStripeCheckout}
+                                        className="w-full p-6 border-2 border-purple-300 rounded-xl hover:bg-purple-50"
+                                    >
+                                        💳 Pagar con Stripe
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <CarritoPanel />
+                        <Chatbot />
+                    </div>
+                );
+            }
+
+            // MIS PEDIDOS con opción de calificar
+            if (currentPage === 'mis-pedidos') {
+                return (
+                    <div className="min-h-screen bg-gray-50">
+                        <Header />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold mb-8">Mis Pedidos</h1>
+
+                            {pedidos.length === 0 ? (
+                                <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                                    <h2 className="text-2xl font-bold mb-2">No tienes pedidos</h2>
+                                    <button
+                                        onClick={() => setCurrentPage('galeria')}
+                                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg mt-4"
+                                    >
+                                        Explorar Personajes
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {pedidos.map(pedido => (
+                                        <div key={pedido.id} className="bg-white rounded-xl shadow-lg p-6">
+                                            <div className="flex gap-6">
+                                                <img src={pedido.personaje.imagen} className="w-24 h-24 rounded-lg object-cover" />
+                                                <div className="flex-1">
+                                                    <h3 className="font-bold text-lg">{pedido.personaje.nombre}</h3>
+                                                    <p className="text-sm text-gray-600">{pedido.tipoVideo.nombre}</p>
+                                                    <div className="mt-4">
+                                                        <div className="flex justify-between mb-2">
+                                                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                                                                {pedido.estado}
+                                                            </span>
+                                                            <span className="font-semibold">{pedido.progreso}%</span>
+                                                        </div>
+                                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                                            <div
+                                                                className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full"
+                                                                style={{width: `${pedido.progreso}%`}}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4 space-y-2">
+                                                        {pedido.progreso < 100 && (
+                                                            <button
+                                                                onClick={() => simulateProgress(pedido.id)}
+                                                                className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg"
+                                                            >
+                                                                ⚡ Simular Progreso (Demo)
+                                                            </button>
+                                                        )}
+
+                                                        {pedido.progreso === 100 && !pedido.calificado && pedido.puedeCalificar && (
+                                                            <button
+                                                                onClick={() => handleAbrirReview(pedido)}
+                                                                className="w-full px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-semibold flex items-center justify-center space-x-2"
+                                                            >
+                                                                <Star filled size={20} />
+                                                                <span>Calificar y Opinar</span>
+                                                            </button>
+                                                        )}
+
+                                                        {pedido.calificado && (
+                                                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                                                <p className="text-green-800 font-semibold">✅ Ya calificaste este video</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <ReviewModal />
+                        <CarritoPanel />
+                        <Chatbot />
+                    </div>
+                );
+            }
+
+            return null;
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
