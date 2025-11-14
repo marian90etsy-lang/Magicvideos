@@ -8,7 +8,6 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CDNs para funcionalidad real -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <style>
@@ -78,6 +77,14 @@
         .scroll-container {
             animation: scroll 30s linear infinite;
         }
+
+        .star-filled {
+            color: #fbbf24;
+        }
+        
+        .star-empty {
+            color: #d1d5db;
+        }
     </style>
 </head>
 <body>
@@ -86,7 +93,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // ===== CONFIGURACIÓN BACKEND =====
+        // ===== CONFIGURACIÓN =====
         const SUPABASE_URL = 'https://vrhqvjsvqowsxioqusrw.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyaHF2anN2cW93c3hpb3F1c3J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjU3OTAsImV4cCI6MjA3ODYwMTc5MH0.FDSaJ-592b23kxeANFZ49vfP3skIBFv1hO5p9NSUfSE';
         const STRIPE_KEY = 'pk_test_51ST05MLwRYu46TgB8nY7XAlP9JjMTiL6sB8QwkGadNQW3JO2VNjfTUWm4IfG53oRdYYvDvzQRvaf4uBTBFb8Yyl000cjCYqRJR';
@@ -96,12 +103,66 @@
 
         // ===== DATOS =====
         const personajes = [
-            { id: 1, nombre: 'Súper Héroe', emoji: '🦸', precio: 29.99, descripcion: 'Videos de acción y aventuras heroicas' },
-            { id: 2, nombre: 'Princesa Mágica', emoji: '👸', precio: 34.99, descripcion: 'Cuentos de hadas y magia' },
-            { id: 3, nombre: 'Dinosaurio Aventurero', emoji: '🦕', precio: 24.99, descripcion: 'Aventuras prehistóricas emocionantes' },
-            { id: 4, nombre: 'Robot del Espacio', emoji: '🤖', precio: 29.99, descripcion: 'Misiones espaciales y tecnología' },
-            { id: 5, nombre: 'Hada Encantada', emoji: '🧚', precio: 32.99, descripcion: 'Magia y fantasía encantadora' },
-            { id: 6, nombre: 'Pirata Alegre', emoji: '🏴‍☠️', precio: 27.99, descripcion: 'Búsqueda de tesoros y aventuras' }
+            { 
+                id: 1, 
+                nombre: 'Súper Héroe', 
+                emoji: '🦸', 
+                precio: 29.99, 
+                descripcion: 'Videos de acción y aventuras heroicas llenas de emoción',
+                videoDemo: 'Avatar_IV_Video.mp4',
+                esNuevo: true,
+                popularidad: 95
+            },
+            { 
+                id: 2, 
+                nombre: 'Princesa Mágica', 
+                emoji: '👸', 
+                precio: 34.99, 
+                descripcion: 'Cuentos de hadas mágicos llenos de encanto y fantasía',
+                videoDemo: 'Avatar_IV_Video.mp4',
+                esNuevo: false,
+                popularidad: 98
+            },
+            { 
+                id: 3, 
+                nombre: 'Dinosaurio Aventurero', 
+                emoji: '🦕', 
+                precio: 24.99, 
+                descripcion: 'Aventuras prehistóricas emocionantes para los pequeños exploradores',
+                videoDemo: 'Avatar_IV_Video.mp4',
+                esNuevo: true,
+                popularidad: 87
+            },
+            { 
+                id: 4, 
+                nombre: 'Robot del Espacio', 
+                emoji: '🤖', 
+                precio: 29.99, 
+                descripcion: 'Misiones espaciales increíbles con tecnología futurista',
+                videoDemo: 'Avatar_IV_Video.mp4',
+                esNuevo: false,
+                popularidad: 92
+            },
+            { 
+                id: 5, 
+                nombre: 'Hada Encantada', 
+                emoji: '🧚', 
+                precio: 32.99, 
+                descripcion: 'Magia y fantasía encantadora en un mundo de ensueño',
+                videoDemo: 'Avatar_IV_Video.mp4',
+                esNuevo: true,
+                popularidad: 90
+            },
+            { 
+                id: 6, 
+                nombre: 'Pirata Alegre', 
+                emoji: '🏴‍☠️', 
+                precio: 27.99, 
+                descripcion: 'Búsqueda de tesoros y aventuras en alta mar',
+                videoDemo: 'Avatar_IV_Video.mp4',
+                esNuevo: false,
+                popularidad: 85
+            }
         ];
 
         const tiposVideo = [
@@ -131,7 +192,6 @@
             const [misPedidos, setMisPedidos] = useState([]);
             const [loading, setLoading] = useState(false);
 
-            // Autenticación
             useEffect(() => {
                 supabase.auth.getSession().then(({ data: { session } }) => {
                     if (session) {
@@ -160,7 +220,6 @@
                 return () => subscription.unsubscribe();
             }, []);
 
-            // Cargar pedidos
             useEffect(() => {
                 if (usuario) cargarPedidos();
             }, [usuario]);
@@ -232,20 +291,35 @@
                 }
             };
 
+            const verPersonaje = (personaje) => {
+                setSelectedPersonaje(personaje);
+                setCurrentPage('personaje');
+            };
+
             // ===== HEADER =====
             const Header = () => (
                 <header className="bg-white shadow-sm sticky top-0 z-40">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16">
+                        <div className="flex justify-between items-center h-20">
                             <div className="flex items-center cursor-pointer" onClick={() => setCurrentPage('home')}>
-                                <img src="logo.png" alt="Magic Videos" className="h-10" />
+                                <img src="logo.png" alt="Magic Videos" className="h-16" />
                             </div>
                             <nav className="hidden md:flex space-x-8">
-                                <button onClick={() => setCurrentPage('home')} className="text-gray-700 hover:text-purple-600">Inicio</button>
+                                <button onClick={() => setCurrentPage('home')} 
+                                    className="text-gray-700 hover:text-purple-600 font-medium transition">
+                                    Inicio
+                                </button>
                                 {usuario && (
-                                    <button onClick={() => setCurrentPage('misPedidos')} className="text-gray-700 hover:text-purple-600">
-                                        Mis Pedidos
-                                    </button>
+                                    <>
+                                        <button onClick={() => setCurrentPage('dashboard')} 
+                                            className="text-gray-700 hover:text-purple-600 font-medium transition">
+                                            Mi Cuenta
+                                        </button>
+                                        <button onClick={() => setCurrentPage('misPedidos')} 
+                                            className="text-gray-700 hover:text-purple-600 font-medium transition">
+                                            Mis Pedidos
+                                        </button>
+                                    </>
                                 )}
                             </nav>
                             <div className="flex items-center space-x-4">
@@ -257,12 +331,19 @@
                                 </button>
                                 {usuario ? (
                                     <div className="flex items-center space-x-3">
-                                        {usuario.avatar && <img src={usuario.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />}
-                                        <span className="text-sm font-medium">{usuario.nombre}</span>
-                                        <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-red-600">Salir</button>
+                                        {usuario.avatar && <img src={usuario.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-purple-200" />}
+                                        <div className="hidden md:block">
+                                            <p className="text-sm font-semibold">{usuario.nombre}</p>
+                                            <p className="text-xs text-gray-500">{usuario.email}</p>
+                                        </div>
+                                        <button onClick={handleLogout} 
+                                            className="text-sm text-gray-500 hover:text-red-600 font-medium transition">
+                                            Salir
+                                        </button>
                                     </div>
                                 ) : (
-                                    <button onClick={handleLogin} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition">
+                                    <button onClick={handleLogin} 
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-semibold">
                                         Iniciar Sesión
                                     </button>
                                 )}
@@ -272,13 +353,13 @@
                 </header>
             );
 
-            // ===== CONTENIDO =====
             return (
                 <div className="min-h-screen bg-gray-50">
                     <Header />
                     <main>
-                        {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} setSelectedPersonaje={setSelectedPersonaje} />}
-                        {currentPage === 'personalizacion' && <PersonalizacionPage selectedPersonaje={selectedPersonaje} agregarAlCarrito={agregarAlCarrito} usuario={usuario} />}
+                        {currentPage === 'home' && <HomePage verPersonaje={verPersonaje} />}
+                        {currentPage === 'personaje' && <PersonajePage personaje={selectedPersonaje} agregarAlCarrito={agregarAlCarrito} usuario={usuario} />}
+                        {currentPage === 'dashboard' && <DashboardPage usuario={usuario} pedidos={misPedidos} setCurrentPage={setCurrentPage} />}
                         {currentPage === 'carrito' && <CarritoPage carrito={carrito} eliminarDelCarrito={eliminarDelCarrito} handleCheckout={handleCheckout} loading={loading} setCurrentPage={setCurrentPage} />}
                         {currentPage === 'misPedidos' && <MisPedidosPage pedidos={misPedidos} usuario={usuario} />}
                     </main>
@@ -286,11 +367,14 @@
             );
         }
 
-        // ===== PÁGINA INICIO =====
-        function HomePage({ setCurrentPage, setSelectedPersonaje }) {
+        // ===== HOME PAGE =====
+        function HomePage({ verPersonaje }) {
+            const personajesNuevos = personajes.filter(p => p.esNuevo);
+            const personajesPopulares = [...personajes].sort((a, b) => b.popularidad - a.popularidad).slice(0, 3);
+
             return (
                 <div>
-                    {/* Hero con video */}
+                    {/* Hero */}
                     <section className="relative h-screen flex items-center justify-center overflow-hidden">
                         <video autoPlay loop muted playsInline className="video-background">
                             <source src="Avatar_IV_Video.mp4" type="video/mp4" />
@@ -301,11 +385,11 @@
                                 Videos Mágicos Para<br />Momentos Especiales
                             </h1>
                             <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
-                                Videos personalizados únicos con tus personajes favoritos, hechos con IA de última generación
+                                Videos personalizados únicos con tus personajes favoritos
                             </p>
-                            <button onClick={() => setCurrentPage('personalizacion')} 
+                            <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} 
                                 className="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-bold hover:scale-110 transform transition shadow-2xl">
-                                Crear Mi Video ✨
+                                Explorar Personajes ✨
                             </button>
                             <div className="mt-12 flex justify-center space-x-8 text-white">
                                 <div className="text-center">
@@ -318,71 +402,92 @@
                                 </div>
                                 <div className="text-center">
                                     <div className="text-4xl font-bold">99%</div>
-                                    <div className="text-sm">Clientes Satisfechos</div>
+                                    <div className="text-sm">Satisfacción</div>
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    {/* Personajes */}
-                    <section className="py-20 px-4">
+                    {/* Nuevos */}
+                    <section className="py-16 px-4 bg-white">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex justify-between items-center mb-10">
+                                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    ✨ Personajes Nuevos
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {personajesNuevos.map(personaje => (
+                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Más Comprados */}
+                    <section className="py-16 px-4 bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex justify-between items-center mb-10">
+                                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    🔥 Más Comprados
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {personajesPopulares.map(personaje => (
+                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} esPopular />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Todos */}
+                    <section className="py-16 px-4 bg-white">
                         <div className="max-w-7xl mx-auto">
                             <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                Elige Tu Personaje Favorito
+                                Todos los Personajes
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {personajes.map(personaje => (
-                                    <div key={personaje.id} 
-                                        onClick={() => { setSelectedPersonaje(personaje); setCurrentPage('personalizacion'); }}
-                                        className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition cursor-pointer transform hover:scale-105">
-                                        <div className="text-7xl text-center mb-4">{personaje.emoji}</div>
-                                        <h3 className="text-2xl font-bold text-center mb-3">{personaje.nombre}</h3>
-                                        <p className="text-gray-600 text-center mb-6">{personaje.descripcion}</p>
-                                        <div className="text-center">
-                                            <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                                ${personaje.precio}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} />
                                 ))}
                             </div>
                         </div>
                     </section>
 
                     {/* Cómo Funciona */}
-                    <section className="py-20 px-4 bg-gradient-to-r from-purple-50 to-pink-50">
+                    <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-pink-600">
                         <div className="max-w-7xl mx-auto">
-                            <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            <h2 className="text-4xl font-bold text-center mb-12 text-white">
                                 ¿Cómo Funciona?
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-white">
                                 <div className="text-center">
-                                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                    <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <span className="text-4xl">1️⃣</span>
                                     </div>
                                     <h3 className="text-xl font-bold mb-3">Elige Personaje</h3>
-                                    <p className="text-gray-600">Selecciona tu personaje favorito de nuestra colección</p>
+                                    <p className="text-white/90">Selecciona tu favorito</p>
                                 </div>
                                 <div className="text-center">
-                                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                    <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <span className="text-4xl">2️⃣</span>
                                     </div>
                                     <h3 className="text-xl font-bold mb-3">Personaliza</h3>
-                                    <p className="text-gray-600">Escribe tu mensaje especial y elige opciones</p>
+                                    <p className="text-white/90">Escribe tu mensaje</p>
                                 </div>
                                 <div className="text-center">
-                                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                    <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <span className="text-4xl">3️⃣</span>
                                     </div>
                                     <h3 className="text-xl font-bold mb-3">Paga Seguro</h3>
-                                    <p className="text-gray-600">Pago 100% seguro con Stripe</p>
+                                    <p className="text-white/90">Con Stripe</p>
                                 </div>
                                 <div className="text-center">
-                                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                    <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <span className="text-4xl">4️⃣</span>
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3">Recibe Tu Video</h3>
-                                    <p className="text-gray-600">En 24-72 horas recibirás tu video único</p>
+                                    <h3 className="text-xl font-bold mb-3">Recibe Video</h3>
+                                    <p className="text-white/90">En 24-72 horas</p>
                                 </div>
                             </div>
                         </div>
@@ -391,13 +496,44 @@
             );
         }
 
-        // ===== PÁGINA PERSONALIZACIÓN =====
-        function PersonalizacionPage({ selectedPersonaje, agregarAlCarrito, usuario }) {
-            const [personaje, setPersonaje] = useState(selectedPersonaje || personajes[0]);
+        // ===== PERSONAJE CARD =====
+        function PersonajeCard({ personaje, onClick, esPopular }) {
+            return (
+                <div onClick={onClick}
+                    className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition cursor-pointer transform hover:scale-105 relative">
+                    {personaje.esNuevo && !esPopular && (
+                        <span className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            NUEVO
+                        </span>
+                    )}
+                    {esPopular && (
+                        <span className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            🔥 POPULAR
+                        </span>
+                    )}
+                    <div className="text-7xl text-center mb-4">{personaje.emoji}</div>
+                    <h3 className="text-2xl font-bold text-center mb-3">{personaje.nombre}</h3>
+                    <p className="text-gray-600 text-center mb-6 text-sm">{personaje.descripcion}</p>
+                    <div className="text-center">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            ${personaje.precio}
+                        </span>
+                    </div>
+                    <button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transition">
+                        Ver Detalles →
+                    </button>
+                </div>
+            );
+        }
+
+        // ===== PÁGINA DE PERSONAJE =====
+        function PersonajePage({ personaje, agregarAlCarrito, usuario }) {
             const [tipoVideo, setTipoVideo] = useState(tiposVideo[0]);
             const [duracion, setDuracion] = useState(duraciones[0]);
             const [velocidad, setVelocidad] = useState(velocidades[0]);
             const [mensaje, setMensaje] = useState('');
+
+            if (!personaje) return null;
 
             const precioTotal = personaje.precio + tipoVideo.precio + duracion.precioExtra + velocidad.precioExtra;
 
@@ -418,97 +554,197 @@
             };
 
             return (
-                <div className="max-w-6xl mx-auto px-4 py-12">
-                    <h1 className="text-4xl font-bold text-center mb-12">Personaliza Tu Video</h1>
-                    <div className="bg-white rounded-3xl p-8 shadow-xl space-y-10">
-                        
-                        {/* Personaje */}
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <div className="grid md:grid-cols-2 gap-12">
+                        {/* Video Demo */}
                         <div>
-                            <h2 className="text-2xl font-bold mb-6">1. Selecciona Personaje</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                                {personajes.map(p => (
-                                    <div key={p.id} onClick={() => setPersonaje(p)}
-                                        className={`p-4 rounded-2xl border-2 cursor-pointer transition ${
-                                            personaje.id === p.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
-                                        }`}>
-                                        <div className="text-4xl text-center mb-2">{p.emoji}</div>
-                                        <p className="text-xs font-semibold text-center">{p.nombre}</p>
+                            <div className="bg-black rounded-3xl overflow-hidden shadow-2xl mb-6">
+                                <video controls className="w-full">
+                                    <source src={personaje.videoDemo} type="video/mp4" />
+                                </video>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 shadow-lg">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h1 className="text-4xl font-bold">{personaje.emoji} {personaje.nombre}</h1>
+                                    <span className="text-3xl font-bold text-purple-600">${personaje.precio}</span>
+                                </div>
+                                <p className="text-gray-600 mb-6">{personaje.descripcion}</p>
+                                <div className="flex items-center space-x-4">
+                                    <div className="flex items-center">
+                                        {[...Array(5)].map((_, i) => (
+                                            <span key={i} className="text-2xl star-filled">★</span>
+                                        ))}
                                     </div>
-                                ))}
+                                    <span className="text-gray-600">(4.9/5 - 127 reviews)</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Tipo */}
-                        <div>
-                            <h2 className="text-2xl font-bold mb-6">2. Tipo de Video</h2>
-                            <div className="grid grid-cols-3 gap-4">
-                                {tiposVideo.map(t => (
-                                    <div key={t.id} onClick={() => setTipoVideo(t)}
-                                        className={`p-6 rounded-2xl border-2 cursor-pointer transition ${
-                                            tipoVideo.id === t.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
-                                        }`}>
-                                        <p className="font-semibold mb-2">{t.nombre}</p>
-                                        <p className="text-purple-600 font-bold">+${t.precio}</p>
-                                    </div>
-                                ))}
+                        {/* Personalización */}
+                        <div className="bg-white rounded-3xl p-8 shadow-xl">
+                            <h2 className="text-3xl font-bold mb-8">Personaliza Tu Video</h2>
+                            
+                            {/* Tipo */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4">Tipo de Video</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {tiposVideo.map(t => (
+                                        <button key={t.id} onClick={() => setTipoVideo(t)}
+                                            className={`p-4 rounded-xl border-2 transition ${
+                                                tipoVideo.id === t.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                                            }`}>
+                                            <p className="font-semibold text-sm">{t.nombre}</p>
+                                            <p className="text-purple-600 font-bold text-sm">+${t.precio}</p>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Duración */}
-                        <div>
-                            <h2 className="text-2xl font-bold mb-6">3. Duración</h2>
-                            <div className="grid grid-cols-3 gap-4">
-                                {duraciones.map(d => (
-                                    <div key={d.id} onClick={() => setDuracion(d)}
-                                        className={`p-6 rounded-2xl border-2 cursor-pointer ${
-                                            duracion.id === d.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
-                                        }`}>
-                                        <p className="font-semibold mb-2">{d.nombre}</p>
-                                        <p className="text-purple-600 font-bold">+${d.precioExtra}</p>
-                                    </div>
-                                ))}
+                            {/* Duración */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4">Duración</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {duraciones.map(d => (
+                                        <button key={d.id} onClick={() => setDuracion(d)}
+                                            className={`p-4 rounded-xl border-2 transition ${
+                                                duracion.id === d.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
+                                            }`}>
+                                            <p className="font-semibold text-sm">{d.nombre}</p>
+                                            <p className="text-purple-600 font-bold">+${d.precioExtra}</p>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Velocidad */}
-                        <div>
-                            <h2 className="text-2xl font-bold mb-6">4. Velocidad de Entrega</h2>
-                            <div className="grid grid-cols-3 gap-4">
-                                {velocidades.map(v => (
-                                    <div key={v.id} onClick={() => setVelocidad(v)}
-                                        className={`p-6 rounded-2xl border-2 cursor-pointer ${
-                                            velocidad.id === v.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
-                                        }`}>
-                                        <p className="font-semibold mb-2">{v.nombre}</p>
-                                        <p className="text-purple-600 font-bold">+${v.precioExtra}</p>
-                                    </div>
-                                ))}
+                            {/* Velocidad */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4">Velocidad de Entrega</h3>
+                                <div className="space-y-3">
+                                    {velocidades.map(v => (
+                                        <button key={v.id} onClick={() => setVelocidad(v)}
+                                            className={`w-full p-4 rounded-xl border-2 transition text-left ${
+                                                velocidad.id === v.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
+                                            }`}>
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-semibold">{v.nombre}</span>
+                                                <span className="text-purple-600 font-bold">+${v.precioExtra}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Mensaje */}
-                        <div>
-                            <h2 className="text-2xl font-bold mb-6">5. Tu Mensaje Personalizado</h2>
-                            <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)}
-                                className="w-full p-6 border-2 border-gray-200 rounded-2xl resize-none focus:border-purple-600 focus:outline-none"
-                                rows="6" placeholder="Escribe aquí tu mensaje especial..."
-                            />
-                        </div>
-
-                        {/* Total */}
-                        <div className="border-t-2 pt-8 flex justify-between items-center">
-                            <div>
-                                <p className="text-gray-600 mb-2">Precio Total:</p>
-                                <p className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                    ${precioTotal.toFixed(2)}
-                                </p>
+                            {/* Mensaje */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4">Tu Mensaje Personalizado</h3>
+                                <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)}
+                                    className="w-full p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-purple-600 focus:outline-none"
+                                    rows="6" placeholder="Escribe aquí tu mensaje especial..."
+                                />
                             </div>
-                            <button onClick={handleAgregar}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition shadow-xl">
-                                Agregar al Carrito 🛒
-                            </button>
+
+                            {/* Total */}
+                            <div className="border-t-2 pt-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <span className="text-gray-600 text-lg">Total:</span>
+                                    <span className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                        ${precioTotal.toFixed(2)}
+                                    </span>
+                                </div>
+                                <button onClick={handleAgregar}
+                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl text-xl font-bold hover:scale-105 transition shadow-xl">
+                                    Agregar al Carrito 🛒
+                                </button>
+                            </div>
                         </div>
                     </div>
+                </div>
+            );
+        }
+
+        // ===== DASHBOARD =====
+        function DashboardPage({ usuario, pedidos, setCurrentPage }) {
+            if (!usuario) {
+                return (
+                    <div className="text-center py-20">
+                        <p className="text-xl">Inicia sesión para ver tu dashboard</p>
+                    </div>
+                );
+            }
+
+            const pedidosCompletados = pedidos.filter(p => p.estado === 'completado').length;
+            const pedidosEnProceso = pedidos.filter(p => ['pagado', 'en_proceso', 'en_edicion'].includes(p.estado)).length;
+
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <h1 className="text-4xl font-bold mb-8">Mi Cuenta</h1>
+                    
+                    <div className="grid md:grid-cols-3 gap-6 mb-12">
+                        {/* Card Pedidos */}
+                        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-8 text-white shadow-xl cursor-pointer hover:scale-105 transition"
+                            onClick={() => setCurrentPage('misPedidos')}>
+                            <div className="text-5xl mb-4">📦</div>
+                            <h2 className="text-3xl font-bold mb-2">{pedidos.length}</h2>
+                            <p className="text-white/80">Total de Pedidos</p>
+                        </div>
+
+                        {/* Card Videos Recibidos */}
+                        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl p-8 text-white shadow-xl cursor-pointer hover:scale-105 transition">
+                            <div className="text-5xl mb-4">🎬</div>
+                            <h2 className="text-3xl font-bold mb-2">{pedidosCompletados}</h2>
+                            <p className="text-white/80">Videos Recibidos</p>
+                        </div>
+
+                        {/* Card Cupones */}
+                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl p-8 text-white shadow-xl cursor-pointer hover:scale-105 transition">
+                            <div className="text-5xl mb-4">🎟️</div>
+                            <h2 className="text-3xl font-bold mb-2">0</h2>
+                            <p className="text-white/80">Cupones Disponibles</p>
+                        </div>
+                    </div>
+
+                    {/* Info Usuario */}
+                    <div className="bg-white rounded-3xl p-8 shadow-xl mb-8">
+                        <h2 className="text-2xl font-bold mb-6">Información Personal</h2>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <p className="text-gray-600 mb-2">Nombre</p>
+                                <p className="text-xl font-semibold">{usuario.nombre}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-600 mb-2">Email</p>
+                                <p className="text-xl font-semibold">{usuario.email}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Pedidos en Proceso */}
+                    {pedidosEnProceso > 0 && (
+                        <div className="bg-white rounded-3xl p-8 shadow-xl">
+                            <h2 className="text-2xl font-bold mb-6">Pedidos en Proceso</h2>
+                            <div className="space-y-4">
+                                {pedidos.filter(p => ['pagado', 'en_proceso', 'en_edicion'].includes(p.estado)).map(pedido => (
+                                    <div key={pedido.id} className="border-2 border-purple-200 rounded-2xl p-6">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="text-xl font-bold mb-2">{pedido.personaje_nombre}</h3>
+                                                <p className="text-gray-600 text-sm">{pedido.mensaje_personalizado}</p>
+                                            </div>
+                                            <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold">
+                                                {pedido.estado}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-4">
+                                            <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-4 rounded-full"
+                                                style={{width: `${pedido.progreso}%`}}>
+                                            </div>
+                                        </div>
+                                        <p className="text-center text-sm text-gray-600 mt-2">{pedido.progreso}% completado</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -523,7 +759,7 @@
                         <div className="text-8xl mb-6">🛒</div>
                         <h2 className="text-3xl font-bold mb-4">Tu carrito está vacío</h2>
                         <button onClick={() => setCurrentPage('home')} 
-                            className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold">
+                            className="mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition">
                             Ver Personajes
                         </button>
                     </div>
@@ -535,38 +771,56 @@
                     <h1 className="text-4xl font-bold mb-8">Tu Carrito</h1>
                     <div className="bg-white rounded-3xl p-8 shadow-xl">
                         {carrito.map((item, i) => (
-                            <div key={i} className="border-b pb-6 mb-6 last:border-0">
+                            <div key={i} className="border-b-2 pb-6 mb-6 last:border-0">
                                 <div className="flex justify-between">
-                                    <div>
+                                    <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-3">
                                             <span className="text-4xl">{item.personaje.emoji}</span>
                                             <h3 className="text-2xl font-bold">{item.personaje.nombre}</h3>
                                         </div>
-                                        <p className="text-gray-600">Tipo: {item.tipoVideo.nombre}</p>
-                                        <p className="text-gray-600">Duración: {item.duracion.nombre}</p>
-                                        <p className="text-gray-600">Entrega: {item.velocidadEntrega.nombre}</p>
-                                        <p className="text-gray-500 italic mt-2">"{item.mensaje}"</p>
+                                        <p className="text-gray-600 mb-2">• Tipo: {item.tipoVideo.nombre}</p>
+                                        <p className="text-gray-600 mb-2">• Duración: {item.duracion.nombre}</p>
+                                        <p className="text-gray-600 mb-2">• Entrega: {item.velocidadEntrega.nombre}</p>
+                                        <p className="text-gray-500 italic mt-3">"{item.mensaje}"</p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right ml-6">
                                         <p className="text-3xl font-bold text-purple-600 mb-3">${item.precioTotal.toFixed(2)}</p>
                                         <button onClick={() => eliminarDelCarrito(i)} 
-                                            className="text-red-600 hover:text-red-800">Eliminar</button>
+                                            className="text-red-600 hover:text-red-800 font-semibold transition">
+                                            Eliminar
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         ))}
                         
-                        <div className="border-t-2 pt-8 flex justify-between items-center">
-                            <div>
-                                <p className="text-gray-600 mb-2">Total:</p>
-                                <p className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                    ${total.toFixed(2)}
-                                </p>
+                        <div className="border-t-2 pt-8 space-y-6">
+                            {/* TODO: Cupón de descuento - FASE 2 */}
+                            <div className="bg-gray-50 rounded-xl p-4">
+                                <p className="text-sm text-gray-600 mb-2">¿Tienes un cupón de descuento?</p>
+                                <div className="flex gap-2">
+                                    <input type="text" placeholder="Código de cupón" 
+                                        className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-600 focus:outline-none"
+                                        disabled />
+                                    <button className="px-6 py-2 bg-gray-300 text-gray-500 rounded-lg font-semibold cursor-not-allowed">
+                                        Aplicar
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2">Próximamente disponible</p>
                             </div>
-                            <button onClick={handleCheckout} disabled={loading}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition disabled:opacity-50 shadow-xl">
-                                {loading ? 'Procesando...' : 'Pagar con Stripe 💳'}
-                            </button>
+
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="text-gray-600 mb-2">Total:</p>
+                                    <p className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                        ${total.toFixed(2)}
+                                    </p>
+                                </div>
+                                <button onClick={handleCheckout} disabled={loading}
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition disabled:opacity-50 shadow-xl">
+                                    {loading ? 'Procesando...' : 'Pagar con Stripe 💳'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -615,7 +869,7 @@
                                     </div>
                                 </div>
                                 
-                                <div className="w-full bg-gray-200 rounded-full h-6">
+                                <div className="w-full bg-gray-200 rounded-full h-6 mb-2">
                                     <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-6 rounded-full transition-all flex items-center justify-center text-white text-sm font-bold"
                                         style={{width: `${pedido.progreso}%`}}>
                                         {pedido.progreso}%
@@ -623,9 +877,9 @@
                                 </div>
                                 
                                 {pedido.video_url && (
-                                    <div className="mt-6">
+                                    <div className="mt-6 pt-6 border-t-2">
                                         <a href={pedido.video_url} target="_blank" rel="noopener noreferrer"
-                                            className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition">
+                                            className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold hover:scale-105 transition shadow-xl">
                                             Ver Mi Video 🎬
                                         </a>
                                     </div>
@@ -637,7 +891,6 @@
             );
         }
 
-        // Renderizar
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
