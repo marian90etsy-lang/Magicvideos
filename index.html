@@ -214,15 +214,8 @@
 
         const velocidades = [
             { id: 'estandar', nombre: 'Estándar (3-5 días)', horas: 120, precioExtra: 0 },
-            { id: 'rapida', nombre: 'Rápida (48 horas)', horas: 48, precioExtra: 20 },
-            { id: 'express', nombre: '🚀 Express (24 horas)', horas: 24, precioExtra: 40 },
-            { id: 'ultra', nombre: '⚡ Ultra Express (12 horas)', horas: 12, precioExtra: 70, premium: true }
-        ];
-
-        // FASE 3: Opciones premium
-        const opcionesPremium = [
-            { id: 'foto', nombre: 'Agregar Foto del Niño', descripcion: 'Incluye la foto de tu hijo/a en el video', precio: 15, emoji: '📸' },
-            { id: 'extendido', nombre: 'Video Extendido Premium', descripcion: 'Duración extendida con más escenas personalizadas', precio: 20, emoji: '🎬' }
+            { id: 'rapida', nombre: 'Rápida (1-2 días)', horas: 48, precioExtra: 20 },
+            { id: 'express', nombre: 'Express (24 horas)', horas: 24, precioExtra: 40 }
         ];
 
         // ===== COMPONENTES AUXILIARES =====
@@ -441,67 +434,6 @@
             );
         }
 
-        // ===== MODAL UPSELL ENTREGA RÁPIDA =====
-        function UpsellModal({ isOpen, onClose, onAccept, precioActual }) {
-            if (!isOpen) return null;
-
-            return (
-                <div className="modal-backdrop" onClick={onClose}>
-                    <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <div className="text-center mb-6">
-                            <div className="text-6xl mb-4 animate-bounce">⚡</div>
-                            <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                ¡Recíbelo Más Rápido!
-                            </h2>
-                            <p className="text-gray-600">¿Por qué esperar? Obtén tu video personalizado en tiempo récord</p>
-                        </div>
-
-                        <div className="space-y-4 mb-6">
-                            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 border-2 border-orange-200 hover:border-orange-400 transition cursor-pointer"
-                                onClick={() => onAccept('ultra')}>
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-orange-700 flex items-center gap-2">
-                                            ⚡ Ultra Express
-                                            <span className="premium-badge text-xs">MÁS POPULAR</span>
-                                        </h3>
-                                        <p className="text-sm text-gray-600">En solo 12 horas</p>
-                                    </div>
-                                    <span className="text-2xl font-bold text-orange-600">+$70</span>
-                                </div>
-                                <ul className="text-sm text-gray-700 space-y-2">
-                                    <li>✓ Entrega garantizada en 12 horas</li>
-                                    <li>✓ Prioridad máxima de producción</li>
-                                    <li>✓ Soporte prioritario 24/7</li>
-                                </ul>
-                            </div>
-
-                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200 hover:border-blue-400 transition cursor-pointer"
-                                onClick={() => onAccept('express')}>
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-blue-700">🚀 Express</h3>
-                                        <p className="text-sm text-gray-600">En 24 horas</p>
-                                    </div>
-                                    <span className="text-2xl font-bold text-blue-600">+$40</span>
-                                </div>
-                                <ul className="text-sm text-gray-700 space-y-2">
-                                    <li>✓ Entrega en 24 horas</li>
-                                    <li>✓ Alta prioridad</li>
-                                    <li>✓ Soporte rápido</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <button onClick={onClose}
-                            className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-50 transition">
-                            No gracias, continuar con entrega estándar
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
         // ===== MODAL REVIEW =====
         function ReviewModal({ isOpen, onClose, pedido, onReviewSubmit }) {
             const [calificacion, setCalificacion] = useState(5);
@@ -592,7 +524,6 @@
             const [loading, setLoading] = useState(false);
             const [showLoginModal, setShowLoginModal] = useState(false);
             const [showReviewModal, setShowReviewModal] = useState(false);
-            const [showUpsellModal, setShowUpsellModal] = useState(false);
             const [pedidoParaReview, setPedidoParaReview] = useState(null);
 
             useEffect(() => {
@@ -721,12 +652,6 @@
                     setLoading(false);
                 }
             };
-                } catch (error) {
-                    alert('Error: ' + error.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
 
             const verPersonaje = (personaje) => {
                 setSelectedPersonaje(personaje);
@@ -819,8 +744,7 @@
                 <div className="min-h-screen bg-gray-50">
                     <Header />
                     <main>
-                        {currentPage === 'home' && <HomePage verPersonaje={verPersonaje} setCurrentPage={setCurrentPage} />}
-                        {currentPage === 'todosPersonajes' && <TodosPersonajesPage verPersonaje={verPersonaje} />}
+                        {currentPage === 'home' && <HomePage verPersonaje={verPersonaje} />}
                         {currentPage === 'personaje' && <PersonajePage personaje={selectedPersonaje} agregarAlCarrito={agregarAlCarrito} usuario={usuario} onLoginClick={handleLoginClick} />}
                         {currentPage === 'dashboard' && <DashboardPage usuario={usuario} pedidos={misPedidos} cupones={misCupones} setCurrentPage={setCurrentPage} />}
                         {currentPage === 'cupones' && <CuponesPage usuario={usuario} cupones={misCupones} />}
@@ -841,22 +765,12 @@
                         pedido={pedidoParaReview}
                         onReviewSubmit={handleReviewSubmit}
                     />
-
-                    <UpsellModal
-                        isOpen={showUpsellModal}
-                        onClose={() => setShowUpsellModal(false)}
-                        onAccept={(velocidad) => {
-                            setShowUpsellModal(false);
-                            handleCheckout(velocidad);
-                        }}
-                        precioActual={carrito.reduce((sum, item) => sum + item.precioTotal, 0)}
-                    />
                 </div>
             );
         }
 
         // ===== HOME PAGE ===== 
-        function HomePage({ verPersonaje, setCurrentPage }) {
+        function HomePage({ verPersonaje }) {
             const personajesNuevos = personajes.filter(p => p.esNuevo);
             const personajesPopulares = [...personajes].sort((a, b) => b.popularidad - a.popularidad).slice(0, 3);
 
@@ -875,7 +789,7 @@
                             <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
                                 Videos personalizados únicos con tus personajes favoritos
                             </p>
-                            <button onClick={() => setCurrentPage('todosPersonajes')} 
+                            <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} 
                                 className="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-bold hover:scale-110 transform transition shadow-2xl">
                                 Explorar Personajes ✨
                             </button>
@@ -922,7 +836,50 @@
                         </div>
                     </section>
 
-                    {/* Cómo Funciona */}
+                    {/* Resto de secciones igual que antes... */}
+                    <section className="py-16 px-4 bg-white">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex justify-between items-center mb-10">
+                                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    ✨ Personajes Nuevos
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {personajesNuevos.map(personaje => (
+                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="py-16 px-4 bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex justify-between items-center mb-10">
+                                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    🔥 Más Comprados
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {personajesPopulares.map(personaje => (
+                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} esPopular />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="py-16 px-4 bg-white">
+                        <div className="max-w-7xl mx-auto">
+                            <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                Todos los Personajes
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {personajes.map(personaje => (
+                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
                     <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-pink-600">
                         <div className="max-w-7xl mx-auto">
                             <h2 className="text-4xl font-bold text-center mb-12 text-white">
@@ -955,70 +912,6 @@
                                         <span className="text-4xl">4️⃣</span>
                                     </div>
                                     <h3 className="text-xl font-bold mb-3">Recibe Video</h3>
-                                    <p className="text-white/90">En 48-72 horas</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Nuevos */}
-                    <section className="py-16 px-4 bg-white">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="flex justify-between items-center mb-10">
-                                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                    ✨ Personajes Nuevos
-                                </h2>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {personajesNuevos.map(personaje => (
-                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} />
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Más Comprados */}
-                    <section className="py-16 px-4 bg-gradient-to-r from-purple-50 to-pink-50">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="flex justify-between items-center mb-10">
-                                <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                    🔥 Más Comprados
-                                </h2>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {personajesPopulares.map(personaje => (
-                                    <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} esPopular />
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Botón Ver Todos */}
-                    <section className="py-12 px-4 bg-white">
-                        <div className="max-w-7xl mx-auto text-center">
-                            <button onClick={() => setCurrentPage('todosPersonajes')}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-12 py-5 rounded-full text-xl font-bold hover:scale-110 transform transition shadow-2xl">
-                                Ver Todos los Personajes 🎭
-                            </button>
-                        </div>
-                    </section>
-                </div>
-            );
-        }
-                                    <p className="text-white/90">Escribe tu mensaje</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <span className="text-4xl">3️⃣</span>
-                                    </div>
-                                    <h3 className="text-xl font-bold mb-3">Paga Seguro</h3>
-                                    <p className="text-white/90">Con Stripe</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <span className="text-4xl">4️⃣</span>
-                                    </div>
-                                    <h3 className="text-xl font-bold mb-3">Recibe Video</h3>
                                     <p className="text-white/90">En 24-72 horas</p>
                                 </div>
                             </div>
@@ -1032,26 +925,6 @@
         // El resto de componentes (PersonajeCard, PersonajePage, Dashboard, etc.) 
         // mantienen la misma estructura pero con las nuevas funcionalidades integradas
 
-        // ===== PÁGINA TODOS LOS PERSONAJES =====
-        function TodosPersonajesPage({ verPersonaje }) {
-            return (
-                <div className="max-w-7xl mx-auto px-4 py-12">
-                    <h1 className="text-5xl font-bold text-center mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        Todos Nuestros Personajes
-                    </h1>
-                    <p className="text-center text-gray-600 mb-12 text-lg">
-                        Elige el personaje perfecto para tu video mágico
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {personajes.map(personaje => (
-                            <PersonajeCard key={personaje.id} personaje={personaje} onClick={() => verPersonaje(personaje)} />
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        // ===== PERSONAJE CARD =====
         function PersonajeCard({ personaje, onClick, esPopular }) {
             return (
                 <div onClick={onClick}
@@ -1082,13 +955,15 @@
         }
 
         // ===== PÁGINA DE PERSONAJE =====
-        // ===== PÁGINA DE PERSONAJE SIMPLIFICADA =====
         function PersonajePage({ personaje, agregarAlCarrito, usuario, onLoginClick }) {
+            const [tipoVideo, setTipoVideo] = useState(tiposVideo[0]);
+            const [duracion, setDuracion] = useState(duraciones[0]);
+            const [velocidad, setVelocidad] = useState(velocidades[0]);
             const [mensaje, setMensaje] = useState('');
 
             if (!personaje) return null;
 
-            const precioBase = personaje.precio;
+            const precioTotal = personaje.precio + tipoVideo.precio + duracion.precioExtra + velocidad.precioExtra;
             const reviewsPersonaje = reviewsEjemplo.filter(r => r.personaje === personaje.nombre);
             const promedioCalificacion = reviewsPersonaje.length > 0 
                 ? (reviewsPersonaje.reduce((sum, r) => sum + r.calificacion, 0) / reviewsPersonaje.length).toFixed(1)
@@ -1104,19 +979,20 @@
                     alert('Por favor escribe un mensaje');
                     return;
                 }
-
                 agregarAlCarrito({
                     personaje,
+                    tipoVideo,
+                    duracion,
+                    velocidadEntrega: velocidad,
                     mensaje,
-                    precioBase,
-                    precioTotal: precioBase
+                    precioBase: personaje.precio,
+                    precioTotal
                 });
             };
 
             return (
                 <div className="max-w-7xl mx-auto px-4 py-12">
                     <div className="grid md:grid-cols-2 gap-12 mb-12">
-                        {/* Video Demo y Descripción */}
                         <div>
                             <div className="bg-black rounded-3xl overflow-hidden shadow-2xl mb-6">
                                 <video controls className="w-full">
@@ -1128,13 +1004,7 @@
                                     <h1 className="text-4xl font-bold">{personaje.emoji} {personaje.nombre}</h1>
                                     <span className="text-3xl font-bold text-purple-600">${personaje.precio}</span>
                                 </div>
-                                <p className="text-gray-600 mb-6 text-lg">{personaje.descripcion}</p>
-                                
-                                <div className="bg-blue-50 rounded-xl p-4 mb-6">
-                                    <p className="text-sm text-blue-800 font-semibold mb-2">⏱️ Tiempo de Entrega</p>
-                                    <p className="text-blue-700">Tu video personalizado estará listo en <span className="font-bold">48-72 horas</span></p>
-                                </div>
-
+                                <p className="text-gray-600 mb-6">{personaje.descripcion}</p>
                                 <div className="flex items-center space-x-4">
                                     <StarRating rating={5} />
                                     <span className="text-gray-600">({promedioCalificacion}/5 - {reviewsPersonaje.length || 127} reviews)</span>
@@ -1142,71 +1012,52 @@
                             </div>
                         </div>
 
-                        {/* Mensaje Personalizado */}
                         <div className="bg-white rounded-3xl p-8 shadow-xl">
-                            <h2 className="text-3xl font-bold mb-6">Personaliza Tu Video</h2>
+                            <h2 className="text-3xl font-bold mb-8">Personaliza Tu Video</h2>
                             
                             <div className="mb-8">
-                                <h3 className="text-xl font-bold mb-4">Tu Mensaje Personalizado</h3>
-                                <textarea 
-                                    value={mensaje} 
-                                    onChange={(e) => setMensaje(e.target.value)}
-                                    className="w-full p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-purple-600 focus:outline-none"
-                                    rows="10" 
-                                    placeholder="Escribe aquí tu mensaje especial... 
-
-Ejemplo: 
-¡Feliz cumpleaños Lucas! Hoy cumples 5 años y quiero desearte un día lleno de aventuras y diversión. Eres el niño más valiente y especial del mundo. ¡Que disfrutes mucho tu día!"
-                                />
-                                <p className="text-sm text-gray-500 mt-2">💡 Incluye el nombre del niño/a y detalles especiales para hacer el video único</p>
-                            </div>
-
-                            <div className="border-t-2 pt-6">
-                                <div className="flex justify-between items-center mb-6">
-                                    <div>
-                                        <p className="text-gray-600 mb-1">Precio Base:</p>
-                                        <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                            ${precioBase.toFixed(2)}
-                                        </p>
-                                        <p className="text-sm text-gray-500 mt-2">Las opciones premium se seleccionan en el carrito</p>
-                                    </div>
+                                <h3 className="text-xl font-bold mb-4">Tipo de Video</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {tiposVideo.map(t => (
+                                        <button key={t.id} onClick={() => setTipoVideo(t)}
+                                            className={`p-4 rounded-xl border-2 transition ${
+                                                tipoVideo.id === t.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-purple-300'
+                                            }`}>
+                                            <p className="font-semibold text-sm">{t.nombre}</p>
+                                            <p className="text-purple-600 font-bold text-sm">+${t.precio}</p>
+                                        </button>
+                                    ))}
                                 </div>
-                                <button 
-                                    onClick={handleAgregar}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl text-xl font-bold hover:scale-105 transition shadow-xl">
-                                    Agregar al Carrito 🛒
-                                </button>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Reviews */}
-                    {reviewsPersonaje.length > 0 && (
-                        <div className="bg-white rounded-3xl p-8 shadow-xl">
-                            <h2 className="text-3xl font-bold mb-8">Opiniones de {personaje.nombre}</h2>
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {reviewsPersonaje.map(review => (
-                                    <div key={review.id} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div>
-                                                <p className="font-bold">{review.nombre}</p>
-                                                <p className="text-sm text-gray-600">{review.fecha}</p>
-                                            </div>
-                                            <StarRating rating={review.calificacion} />
-                                        </div>
-                                        <p className="text-gray-700 italic">"{review.comentario}"</p>
-                                    </div>
-                                ))}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4">Duración</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {duraciones.map(d => (
+                                        <button key={d.id} onClick={() => setDuracion(d)}
+                                            className={`p-4 rounded-xl border-2 transition ${
+                                                duracion.id === d.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
+                                            }`}>
+                                            <p className="font-semibold text-sm">{d.nombre}</p>
+                                            <p className="text-purple-600 font-bold">+${d.precioExtra}</p>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
 
-        // ===== DASHBOARD =====                                                <span className="text-orange-600 font-bold text-lg ml-4">+${opcion.precio}</span>
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4">Velocidad de Entrega</h3>
+                                <div className="space-y-3">
+                                    {velocidades.map(v => (
+                                        <button key={v.id} onClick={() => setVelocidad(v)}
+                                            className={`w-full p-4 rounded-xl border-2 transition text-left ${
+                                                velocidad.id === v.id ? 'border-purple-600 bg-purple-50' : 'border-gray-200'
+                                            }`}>
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-semibold">{v.nombre}</span>
+                                                <span className="text-purple-600 font-bold">+${v.precioExtra}</span>
                                             </div>
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -1487,17 +1338,6 @@ Ejemplo:
                                         <p className="text-gray-600 mb-2">• Tipo: {item.tipoVideo.nombre}</p>
                                         <p className="text-gray-600 mb-2">• Duración: {item.duracion.nombre}</p>
                                         <p className="text-gray-600 mb-2">• Entrega: {item.velocidadEntrega.nombre}</p>
-                                        {item.opcionesPremium && item.opcionesPremium.length > 0 && (
-                                            <div className="mt-2 space-y-1">
-                                                {item.opcionesPremium.map((op, idx) => (
-                                                    <p key={idx} className="text-orange-600 mb-1 flex items-center gap-1">
-                                                        <span>{op.emoji}</span>
-                                                        <span className="font-semibold">{op.nombre}</span>
-                                                        <span className="premium-badge text-xs">PREMIUM</span>
-                                                    </p>
-                                                ))}
-                                            </div>
-                                        )}
                                         <p className="text-gray-500 italic mt-3">"{item.mensaje}"</p>
                                     </div>
                                     <div className="text-right ml-6">
