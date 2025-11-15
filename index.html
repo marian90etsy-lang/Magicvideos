@@ -702,19 +702,19 @@
 
                 try {
                     setLoading(true);
-                    
-                    // Simular checkout (en producción iría al backend)
-                    alert('Funcionalidad de pago en desarrollo. En producción, esto redirigirá a Stripe.');
-                    console.log('Datos del checkout:', { carrito, usuario, cupon: cuponAplicado });
-                    
-                    // const response = await fetch('/api/checkout', {
-                    //     method: 'POST',
-                    //     headers: { 'Content-Type': 'application/json' },
-                    //     body: JSON.stringify({ carrito, usuario, cupon: cuponAplicado })
-                    // });
-                    // const data = await response.json();
-                    // if (data.error) throw new Error(data.error);
-                    // window.location.href = data.url;
+                    const response = await fetch('/api/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            carrito, 
+                            usuario,
+                            cupon: cuponAplicado 
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+                    window.location.href = data.url;
                 } catch (error) {
                     alert('Error: ' + error.message);
                 } finally {
