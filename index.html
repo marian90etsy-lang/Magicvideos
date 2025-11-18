@@ -134,7 +134,7 @@
                 id: 1, 
                 nombre: 'Bluey', 
                 imagen: 'IMAGEN_BLUEY.png',
-                precio: 29.99, 
+                precio: 35.99, 
                 descripcion: 'Un perrito azul lleno de energía y creatividad que ama jugar y aprender. Bluey hace que cada día sea una aventura emocionante llena de risas, juegos y valiosas lecciones. Con su imaginación sin límites, transforma momentos ordinarios en experiencias mágicas que enseñan sobre la amistad, la familia y el valor de ser uno mismo.',
                 videoDemo: 'VIDEO_DESCRIPCION_BLUEY.mp4',
                 reviews: [
@@ -147,7 +147,7 @@
                 id: 2, 
                 nombre: 'Elfo Travieso', 
                 imagen: 'ELFO_TRAVIESO.png',
-                precio: 34.99, 
+                precio: 19.99, 
                 descripcion: 'Un elfo navideño lleno de travesuras y magia que trae la alegría de la Navidad a tu hogar. Este simpático ayudante de Santa Claus crea momentos mágicos cada día de diciembre, dejando sorpresas y risas por toda la casa. Con su espíritu juguetón y su misión especial de reportar a Santa, hace que cada mañana sea emocionante mientras cuenta los días hasta la Navidad.',
                 videoDemo: 'VIDEO_ELFO_TRAVIESO.mp4',
                 reviews: [
@@ -350,7 +350,7 @@
                     {/* Hero con video de fondo */}
                     <section className="relative h-screen flex items-center justify-center overflow-hidden">
                         <video autoPlay loop muted playsInline className="video-background">
-                            <source src="Avatar_IV_Video.mp4" type="video/mp4" />
+                            <source src="VIDEO_FONDO__1_.mp4" type="video/mp4" />
                         </video>
                         <div className="video-overlay"></div>
                         <div className="video-content text-center px-4 fade-in">
@@ -435,7 +435,7 @@
                                 
                                 <div className="bg-blue-50 rounded-xl p-4 mb-6">
                                     <p className="text-sm text-blue-800 font-semibold mb-2">⏱️ Tiempo de Entrega</p>
-                                    <p className="text-blue-700">Tu video estará listo en <span className="font-bold">48-72 horas</span></p>
+                                    <p className="text-blue-700">Tu video estará listo en <span className="font-bold">2-4 días</span></p>
                                 </div>
 
                                 <div className="flex items-center justify-between">
@@ -490,6 +490,89 @@
             );
         }
 
+        // ===== DASHBOARD =====
+        function DashboardPage({ usuario, pedidos, cupones }) {
+            return (
+                <div className="max-w-6xl mx-auto px-4 py-12">
+                    <h1 className="text-4xl font-bold mb-8">Dashboard</h1>
+                    
+                    {/* Cupones */}
+                    <div className="bg-white rounded-3xl p-8 shadow-xl mb-8">
+                        <h2 className="text-2xl font-bold mb-6">Mis Cupones</h2>
+                        {cupones.length === 0 ? (
+                            <p className="text-gray-500">No tienes cupones disponibles</p>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {cupones.map((cupon, i) => (
+                                    <div key={i} className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 border-2 border-purple-300">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="text-2xl font-bold text-purple-600">{cupon.descuento}% OFF</p>
+                                                <p className="text-sm text-gray-600">Código: <span className="font-mono font-bold">{cupon.codigo}</span></p>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                cupon.usado ? 'bg-gray-300 text-gray-600' : 'bg-green-300 text-green-800'
+                                            }`}>
+                                                {cupon.usado ? 'Usado' : 'Disponible'}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">Válido hasta: {cupon.vencimiento}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mis Pedidos */}
+                    <div className="bg-white rounded-3xl p-8 shadow-xl">
+                        <h2 className="text-2xl font-bold mb-6">Mis Pedidos</h2>
+                        {pedidos.length === 0 ? (
+                            <p className="text-gray-500">No tienes pedidos aún</p>
+                        ) : (
+                            <div className="space-y-6">
+                                {pedidos.map(pedido => (
+                                    <div key={pedido.id} className="border-2 border-gray-200 rounded-2xl p-6">
+                                        <div className="flex justify-between mb-4">
+                                            <div>
+                                                <h3 className="text-xl font-bold">{pedido.personaje_nombre}</h3>
+                                                <p className="text-sm text-gray-600">{pedido.fecha}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-2xl font-bold text-purple-600">${pedido.precio_total}</p>
+                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mt-2 ${
+                                                    pedido.estado === 'completado' ? 'bg-green-100 text-green-800' :
+                                                    pedido.estado === 'en_proceso' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {pedido.estado === 'completado' ? 'COMPLETADO' :
+                                                     pedido.estado === 'en_proceso' ? 'EN PROCESO' :
+                                                     'PENDIENTE'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                                            <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-4 rounded-full transition-all"
+                                                style={{width: `${pedido.progreso || 0}%`}}>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-2">Progreso: {pedido.progreso || 0}%</p>
+                                        
+                                        {pedido.video_url && (
+                                            <a href={pedido.video_url} target="_blank" rel="noopener noreferrer"
+                                                className="inline-block mt-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-bold hover:scale-105 transition">
+                                                Ver Mi Video 🎬
+                                            </a>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
         // ===== CARRITO =====
         function CarritoPage({ carrito, eliminarDelCarrito, handleCheckout, loading, setCurrentPage }) {
             if (carrito.length === 0) {
@@ -517,7 +600,7 @@
                                     <div className="flex-1">
                                         <h3 className="text-2xl font-bold mb-2">{item.personaje.nombre}</h3>
                                         <p className="text-gray-500 italic">"{item.mensaje}"</p>
-                                    </div>
+                                              </div>
                                     <div className="text-right ml-6">
                                         <p className="text-3xl font-bold text-purple-600 mb-3">${item.precioTotal.toFixed(2)}</p>
                                         <button onClick={() => eliminarDelCarrito(i)} 
@@ -552,14 +635,60 @@
             const [carrito, setCarrito] = useState([]);
             const [loading, setLoading] = useState(false);
             const [showLoginModal, setShowLoginModal] = useState(false);
+            const [misPedidos, setMisPedidos] = useState([]);
+            const [misCupones, setMisCupones] = useState([]);
 
             useEffect(() => {
                 supabase.auth.getSession().then(({ data: { session } }) => {
                     setUsuario(session?.user ?? null);
+                    
+                    // Cargar datos de ejemplo si hay usuario
+                    if (session?.user) {
+                        // Cupones de ejemplo
+                        setMisCupones([
+                            { codigo: 'WELCOME30', descuento: 30, usado: false, vencimiento: '2025-12-31' },
+                            { codigo: 'NAVIDAD20', descuento: 20, usado: false, vencimiento: '2025-12-25' }
+                        ]);
+                        
+                        // Pedidos de ejemplo
+                        setMisPedidos([
+                            { 
+                                id: 1, 
+                                personaje_nombre: 'Bluey', 
+                                precio_total: 35.99, 
+                                estado: 'en_proceso', 
+                                progreso: 75,
+                                fecha: '2025-11-15',
+                                video_url: null
+                            }
+                        ]);
+                    }
                 });
 
                 const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
                     setUsuario(session?.user ?? null);
+                    
+                    if (session?.user) {
+                        setMisCupones([
+                            { codigo: 'WELCOME30', descuento: 30, usado: false, vencimiento: '2025-12-31' },
+                            { codigo: 'NAVIDAD20', descuento: 20, usado: false, vencimiento: '2025-12-25' }
+                        ]);
+                        
+                        setMisPedidos([
+                            { 
+                                id: 1, 
+                                personaje_nombre: 'Bluey', 
+                                precio_total: 35.99, 
+                                estado: 'en_proceso', 
+                                progreso: 75,
+                                fecha: '2025-11-15',
+                                video_url: null
+                            }
+                        ]);
+                    } else {
+                        setMisCupones([]);
+                        setMisPedidos([]);
+                    }
                 });
 
                 return () => subscription.unsubscribe();
@@ -589,16 +718,46 @@
 
                 try {
                     setLoading(true);
+                    
+                    // Intentar crear sesión de Stripe
                     const response = await fetch('/api/checkout', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ carrito, usuario })
+                        body: JSON.stringify({ 
+                            carrito, 
+                            usuario: {
+                                email: usuario.email,
+                                id: usuario.id
+                            }
+                        })
                     });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
                     const data = await response.json();
-                    if (data.error) throw new Error(data.error);
-                    window.location.href = data.url;
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (data.url) {
+                        // Redirigir a Stripe
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error('No se recibió URL de pago');
+                    }
+                    
                 } catch (error) {
-                    alert('Error: ' + error.message);
+                    console.error('Error en checkout:', error);
+                    
+                    // Mensaje más amigable según el error
+                    if (error.message.includes('404') || error.message.includes('Failed to fetch')) {
+                        alert('⚠️ El sistema de pagos no está configurado aún.\n\nPor favor contacta al administrador para completar la configuración de Stripe.');
+                    } else {
+                        alert('Error: ' + error.message);
+                    }
                 } finally {
                     setLoading(false);
                 }
@@ -608,6 +767,8 @@
                 await supabase.auth.signOut();
                 setUsuario(null);
                 setCarrito([]);
+                setMisCupones([]);
+                setMisPedidos([]);
                 setCurrentPage('home');
             };
 
@@ -630,6 +791,7 @@
                     />
                     <main>
                         {currentPage === 'home' && <HomePage verPersonaje={verPersonaje} />}
+                        {currentPage === 'dashboard' && <DashboardPage usuario={usuario} pedidos={misPedidos} cupones={misCupones} />}
                         {currentPage === 'personaje' && <PersonajePage personaje={selectedPersonaje} agregarAlCarrito={agregarAlCarrito} usuario={usuario} onLoginClick={handleLoginClick} />}
                         {currentPage === 'carrito' && <CarritoPage carrito={carrito} eliminarDelCarrito={eliminarDelCarrito} handleCheckout={handleCheckout} loading={loading} setCurrentPage={setCurrentPage} />}
                     </main>
